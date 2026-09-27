@@ -11,48 +11,33 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+private val LeagueHubColorScheme = darkColorScheme(
+    primary = LeaguePrimary,
+    onPrimary = LeagueOnPrimary,
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    secondary = LeagueInfo,
+    onSecondary = LeagueBackground,
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    tertiary = LeagueManage,
+    onTertiary = LeagueBackground,
+
+    background = LeagueBackground,
+    onBackground = LeagueOnBackground,
+
+    surface = LeagueSurface,
+    onSurface = LeagueOnSurface,
+
+    error = LeagueLive
 )
 
 @Composable
 fun LeagueHubTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
     MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
+        colorScheme = LeagueHubColorScheme,
+        typography = LeagueHubTypography,
+        shapes = LeagueHubShapes,
         content = content
     )
 }
