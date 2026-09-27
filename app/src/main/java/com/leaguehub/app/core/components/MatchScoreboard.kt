@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.leaguehub.app.feature.matches.model.MatchStatus
-import com.leaguehub.app.feature.matches.model.TeamUiModel
+import com.leaguehub.app.feature.team.model.TeamUiModel
 import androidx.compose.foundation.layout.padding
 
 @Composable

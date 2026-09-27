@@ -19,7 +19,9 @@ import com.leaguehub.app.ui.theme.LeagueHubTheme
 import androidx.compose.ui.graphics.Color
 import com.leaguehub.app.core.components.MatchScoreboard
 import com.leaguehub.app.feature.matches.model.MatchStatus
-import com.leaguehub.app.feature.matches.model.TeamUiModel
+import com.leaguehub.app.feature.team.model.TeamUiModel
+import com.leaguehub.app.data.fake.falcons
+import com.leaguehub.app.data.fake.titans
 
 @Preview(
     showBackground = true,
@@ -74,16 +76,8 @@ private fun DesignSystemPreview() {
 
             }
             MatchScoreboard(
-                homeTeam = TeamUiModel(
-                    name = "Falcons",
-                    abbreviation = "FAL",
-                    color = Color(0xFF1687D4)
-                ),
-                awayTeam = TeamUiModel(
-                    name = "Titans",
-                    abbreviation = "TIT",
-                    color = Color(0xFFE8752E)
-                ),
+                homeTeam = falcons,
+                awayTeam = titans,
                 homeScore = 2,
                 awayScore = 1,
                 status = MatchStatus.LIVE,
