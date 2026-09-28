@@ -79,3 +79,23 @@ private fun AwayLineupPreview() = MatchCenterPreviewContent(MatchCenterTab.LINEU
 @Preview(name = "P04 · Estadísticas", showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun StatsPreview() = MatchCenterPreviewContent(MatchCenterTab.STATS)
+
+@Preview(name = "P02 · Sin eventos", showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun EmptySummaryPreview() = EmptyMatchPreview(MatchCenterTab.SUMMARY)
+
+@Preview(name = "P03 · Alineación pendiente", showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun EmptyLineupPreview() = EmptyMatchPreview(MatchCenterTab.LINEUP)
+
+@Preview(name = "P04 · Sin estadísticas", showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun EmptyStatsPreview() = EmptyMatchPreview(MatchCenterTab.STATS)
+
+@Composable
+private fun EmptyMatchPreview(tab: MatchCenterTab) {
+    LeagueHubTheme {
+        MatchCenterScreen(falconsVsWolves, universityLeague.name, tab, emptyList(),
+            emptyList(), falcons.id, emptyList(), emptyList())
+    }
+}

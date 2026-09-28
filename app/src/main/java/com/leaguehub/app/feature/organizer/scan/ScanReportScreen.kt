@@ -81,14 +81,12 @@ fun ScanReportScreen(
 
 @Composable
 private fun ScoreStepper(score: Int, enabled: Boolean, onChange: (Int) -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        TextButton({ onChange((score - 1).coerceAtLeast(0)) }, enabled = enabled && score > 0,
+            modifier = Modifier.width(28.dp), contentPadding = PaddingValues(0.dp)) { Text("−") }
         Text("$score", style = MaterialTheme.typography.headlineMedium)
-        Row {
-            TextButton({ onChange((score - 1).coerceAtLeast(0)) }, enabled = enabled && score > 0,
-                modifier = Modifier.width(32.dp), contentPadding = PaddingValues(0.dp)) { Text("−") }
-            TextButton({ onChange(score + 1) }, enabled = enabled,
-                modifier = Modifier.width(32.dp), contentPadding = PaddingValues(0.dp)) { Text("+") }
-        }
+        TextButton({ onChange(score + 1) }, enabled = enabled,
+            modifier = Modifier.width(28.dp), contentPadding = PaddingValues(0.dp)) { Text("+") }
     }
 }
 

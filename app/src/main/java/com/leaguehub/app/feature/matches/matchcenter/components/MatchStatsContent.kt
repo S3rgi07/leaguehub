@@ -41,10 +41,17 @@ fun MatchStatsContent(statistics: List<MatchStatisticUiModel>, momentum: List<Fl
             val color = MaterialTheme.colorScheme.primary
             Canvas(Modifier.fillMaxWidth().height(70.dp).padding(top = 12.dp)) {
                 val path = Path()
+                var previousX = 0f
+                var previousY = 0f
                 momentum.forEachIndexed { index, value ->
                     val x = size.width * index / (momentum.size - 1)
                     val y = size.height * (1 - value.coerceIn(0f, 1f))
-                    if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                    if (index == 0) path.moveTo(x, y) else {
+                        val middleX = (previousX + x) / 2
+                        path.cubicTo(middleX, previousY, middleX, y, x, y)
+                    }
+                    previousX = x
+                    previousY = y
                 }
                 drawPath(path, color, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round))
             }

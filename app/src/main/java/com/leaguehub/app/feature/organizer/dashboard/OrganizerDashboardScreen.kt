@@ -6,6 +6,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.leaguehub.app.core.components.*
@@ -35,10 +36,10 @@ fun OrganizerDashboardScreen(
         item {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 SectionLabel("RESUMEN DE JORNADA")
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SummaryMetric("${summary.matches}", "Partidos", Modifier.weight(1f))
-                    SummaryMetric("${summary.live}", "En vivo", Modifier.weight(1f))
-                    SummaryMetric("${summary.pending}", "Actas pendientes", Modifier.weight(1f))
+                Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SummaryMetric("${summary.matches}", "Partidos", MaterialTheme.colorScheme.onSurface, Modifier.weight(1f).fillMaxHeight())
+                    SummaryMetric("${summary.live}", "En vivo", MaterialTheme.colorScheme.primary, Modifier.weight(1f).fillMaxHeight())
+                    SummaryMetric("${summary.pending}", "Actas pendientes", MaterialTheme.colorScheme.tertiary, Modifier.weight(1f).fillMaxHeight())
                 }
             }
         }
@@ -76,9 +77,9 @@ fun OrganizerDashboardScreen(
 }
 
 @Composable
-private fun SummaryMetric(value: String, label: String, modifier: Modifier) {
+private fun SummaryMetric(value: String, label: String, color: Color, modifier: Modifier) {
     LeagueHubCard(modifier) {
-        Text(value, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.tertiary)
+        Text(value, style = MaterialTheme.typography.headlineMedium, color = color)
         Text(label, Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodySmall)
     }
 }
