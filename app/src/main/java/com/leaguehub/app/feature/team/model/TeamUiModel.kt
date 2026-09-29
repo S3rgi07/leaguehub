@@ -6,5 +6,8 @@ data class TeamUiModel(
     val id: String,
     val name: String,
     val abbreviation: String,
-    val color: Color
+    val color: Color,
+    val foundedYear: Int? = null,
+    val location: String = "",
+    val squadSize: Int = 0
 )

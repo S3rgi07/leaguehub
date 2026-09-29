@@ -9,7 +9,8 @@ val universityLeague = LeagueUiModel(
     currentMatchday = 8,
     totalMatchdays = 14,
     teamCount = 12,
-    playerCount = 148
+    playerCount = 148,
+    matchCount = 28
 )
 
 val fakeLeagues = listOf(

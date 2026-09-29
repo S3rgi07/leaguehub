@@ -1,16 +1,14 @@
 package com.leaguehub.app
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.leaguehub.app.feature.player.PlayerApp
 import com.leaguehub.app.ui.theme.LeagueHubTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,29 +17,32 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             LeagueHubTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                PlayerApp(
+                    onOpenMap = { match, directions ->
+                        val query = match.venueDetails?.mapQuery ?: match.venue
+                        val uri = Uri.Builder().scheme("https").authority("www.google.com")
+                            .appendPath("maps").appendPath(if (directions) "dir" else "search")
+                            .appendQueryParameter("api", "1")
+                            .appendQueryParameter(if (directions) "destination" else "query", query)
+                            .build()
+                        launchExternal(Intent(Intent.ACTION_VIEW, uri))
+                    },
+                    onShare = { text ->
+                        launchExternal(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, text)
+                        }, "Compartir con"))
+                    }
+                )
             }
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    LeagueHubTheme {
-        Greeting("Android")
+    private fun launchExternal(intent: Intent) {
+        try {
+            startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            Toast.makeText(this, "No hay una aplicación disponible para esta acción.", Toast.LENGTH_LONG).show()
+        }
     }
 }
