@@ -37,5 +37,15 @@ val fakeStandings = listOf(
         played = 8,
         goalDifference = -1,
         points = 11
-    )
+    ),
+    StandingUiModel(6, deportivoSur, 8, -4, 8),
+    StandingUiModel(7, racing12, 8, -11, 4),
+    StandingUiModel(8, leones, 8, -13, 3)
 )
+
+// Separate demo splits. General values above stay shared with the other features.
+val fakeHomeStandings = fakeStandings.map { it.copy(played = 4, points = (it.points + 1) / 2, goalDifference = it.goalDifference / 2) }
+val fakeAwayStandings = fakeStandings.mapIndexed { index, row ->
+    row.copy(played = 4, points = row.points - fakeHomeStandings[index].points,
+        goalDifference = row.goalDifference - fakeHomeStandings[index].goalDifference)
+}

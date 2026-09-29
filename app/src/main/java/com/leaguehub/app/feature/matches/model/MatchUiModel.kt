@@ -1,6 +1,7 @@
 package com.leaguehub.app.feature.matches.model
 
 import com.leaguehub.app.feature.team.model.TeamUiModel
+import java.time.LocalDate
 
 data class MatchUiModel(
     val id: String,
@@ -13,5 +14,8 @@ data class MatchUiModel(
     val matchday: Int,
     val date: String,
     val time: String,
-    val venue: String
+    val venue: String,
+    val localDate: LocalDate? = null,
+    val countdown: String? = null,
+    val venueDetails: VenueUiModel? = null
 )

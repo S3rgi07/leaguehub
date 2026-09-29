@@ -21,7 +21,17 @@ private val LeagueHubColorScheme = darkColorScheme(
     surface = LeagueSurface,
     onSurface = LeagueOnSurface,
 
-    error = LeagueLive
+    error = LeagueLive,
+    onSurfaceVariant = LeagueMuted,
+    outline = LeagueOutline,
+    outlineVariant = LeagueOutline,
+    surfaceVariant = LeagueRaised,
+    surfaceContainer = LeagueSurface,
+    surfaceContainerHigh = LeagueRaised,
+    secondaryContainer = LeagueRaised,
+    onSecondaryContainer = LeagueInfo,
+    tertiaryContainer = LeagueInsightSurface,
+    onTertiaryContainer = LeagueInsight
 )
 
 @Composable
