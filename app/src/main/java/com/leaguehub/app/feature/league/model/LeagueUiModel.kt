@@ -7,5 +7,7 @@ data class LeagueUiModel(
     val currentMatchday: Int,
     val totalMatchdays: Int,
     val teamCount: Int,
-    val playerCount: Int
+    val playerCount: Int,
+    val matchCount: Int = 0,
+    val isActive: Boolean = true
 )

@@ -30,18 +30,18 @@ fun MatchScoreboard(
     awayScore: Int?,
     status: MatchStatus,
     modifier: Modifier = Modifier,
-    minute: String? = null
+    minute: String? = null,
+    countdown: String? = null
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        MatchStatusLabel(
-            status = status
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
+        if (countdown == null || status != MatchStatus.SCHEDULED) {
+            MatchStatusLabel(status = status)
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -57,7 +57,8 @@ fun MatchScoreboard(
                 homeScore = homeScore,
                 awayScore = awayScore,
                 status = status,
-                minute = minute
+                minute = minute,
+                countdown = countdown
             )
 
             TeamInfo(
@@ -75,21 +76,7 @@ private fun TeamInfo(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        Box(
-            modifier = Modifier
-                .size(64.dp)
-                .background(
-                    color = team.color,
-                    shape = CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = team.abbreviation,
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White
-            )
-        }
+        TeamBadge(team, size = 64.dp)
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -106,7 +93,8 @@ private fun ScoreInfo(
     homeScore: Int?,
     awayScore: Int?,
     status: MatchStatus,
-    minute: String?
+    minute: String?,
+    countdown: String?
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
@@ -114,7 +102,7 @@ private fun ScoreInfo(
 
         val scoreText = when (status) {
 
-            MatchStatus.SCHEDULED -> "VS"
+            MatchStatus.SCHEDULED -> countdown ?: "VS"
 
             MatchStatus.LIVE,
             MatchStatus.FINISHED -> {
@@ -122,11 +110,16 @@ private fun ScoreInfo(
             }
         }
 
-        Text(
-            text = scoreText,
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        if (status == MatchStatus.SCHEDULED && countdown != null) {
+            Text("EN", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(countdown.substringBeforeLast(' '), style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.onSurface)
+            Text(countdown.substringAfterLast(' '), style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary)
+        } else {
+            Text(scoreText, style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onBackground)
+        }
 
         if (status == MatchStatus.LIVE && minute != null) {
 

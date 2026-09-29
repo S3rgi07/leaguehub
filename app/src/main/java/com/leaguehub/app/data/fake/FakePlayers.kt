@@ -10,7 +10,16 @@ val sofia = PlayerUiModel(
     teamId = falcons.id,
     goals = 12,
     assists = 8,
-    matchesPlayed = 16
+    matchesPlayed = 16,
+    yellowCards = 3,
+    minutesPlayed = 1284,
+    recentRatings = listOf(8.1, 7.4, 8.8, 8.3, 9.0),
+    rating = 9.0,
+    isStarter = true,
+    isCaptain = true,
+    scoringStreak = 4,
+    mvpAwards = 2,
+    goalRank = 3
 )
 
 private fun squadPlayer(id: String, name: String, number: Int, position: String, teamId: String) =
