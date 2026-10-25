@@ -24,6 +24,7 @@ import com.leaguehub.app.core.components.LeagueHubButton
 import com.leaguehub.app.feature.onboarding.welcome.components.OnboardingFeatureItem
 import com.leaguehub.app.feature.onboarding.welcome.components.OnboardingHero
 import com.leaguehub.app.ui.theme.LeagueHubTheme
+import androidx.compose.foundation.clickable
 
 @Composable
 fun OnboardingScreen(
@@ -99,9 +100,10 @@ fun OnboardingScreen(
 
         Text(
             text = "Ya tengo una cuenta",
-            modifier = Modifier.align(Alignment.CenterHorizontally),
+            modifier = Modifier.align(Alignment.CenterHorizontally) .clickable { onLoginClick() },
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+
         )
     }
 }
