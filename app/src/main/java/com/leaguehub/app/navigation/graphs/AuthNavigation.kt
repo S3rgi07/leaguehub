@@ -13,6 +13,12 @@ import com.leaguehub.app.feature.onboarding.permissions.PermissionsRoute
 import com.leaguehub.app.feature.auth.recovery.RecoveryRoute
 import com.leaguehub.app.feature.onboarding.splash.SplashRoute
 import com.leaguehub.app.feature.onboarding.welcome.OnboardingRoute
+import androidx.compose.ui.platform.LocalContext
+import com.leaguehub.app.LeagueHubApplication
+import com.leaguehub.app.data.session.SessionRole
+import androidx.compose.ui.platform.LocalContext
+
+
 
 fun NavGraphBuilder.authNavigation(
     navController: NavHostController
@@ -41,13 +47,54 @@ fun NavGraphBuilder.authNavigation(
     }
 
     composable<LoginDestination> {
+
+        val application = LocalContext.current.applicationContext
+                as LeagueHubApplication
+
+        val sessionRepository = application.userSessionRepository
+
         LoginRoute(
             onLoginSuccess = {
-                // Se conectará a Home cuando exista en el NavHost
+                val session = sessionRepository.session.value
+
+                when {
+                    session.onboardingCompleted &&
+                            session.role == SessionRole.PLAYER -> {
+
+                        navController.navigate(HomeDestination) {
+                            popUpTo<OnboardingDestination> {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+
+                    session.onboardingCompleted &&
+                            session.role == SessionRole.ORGANIZER -> {
+
+                        navController.navigate(OrganizerDashboardDestination) {
+                            popUpTo<OnboardingDestination> {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+
+                    else -> {
+                        navController.navigate(RoleSelectionDestination) {
+                            popUpTo<LoginDestination> {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                }
             },
+
             onForgotPasswordClick = {
                 navController.navigate(RecoveryDestination)
             },
+
             onCreateAccountClick = {
                 navController.navigate(RegisterDestination)
             }
@@ -106,12 +153,38 @@ fun NavGraphBuilder.authNavigation(
     }
 
     composable<PermissionsDestination> {
+
+        val application = LocalContext.current.applicationContext
+                as LeagueHubApplication
+
+        val sessionRepository = application.userSessionRepository
+
         PermissionsRoute(
             onFinish = {
-                // Pendiente:
-                // Navegar a HomeDestination o
-                // OrganizerDashboardDestination
-                // según el rol seleccionado.
+                when (sessionRepository.session.value.role) {
+
+                    SessionRole.PLAYER -> {
+                        navController.navigate(HomeDestination) {
+                            popUpTo<OnboardingDestination> {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+
+                    SessionRole.ORGANIZER -> {
+                        navController.navigate(OrganizerDashboardDestination) {
+                            popUpTo<OnboardingDestination> {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+
+                    null -> {
+                        navController.navigate(RoleSelectionDestination)
+                    }
+                }
             }
         )
     }

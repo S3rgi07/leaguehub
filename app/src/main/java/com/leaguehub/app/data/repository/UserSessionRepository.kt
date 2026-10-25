@@ -1,4 +1,3 @@
-
 package com.leaguehub.app.data.repository
 
 import com.leaguehub.app.data.session.SessionRole
@@ -19,13 +18,24 @@ class UserSessionRepository {
         userName: String,
         email: String
     ) {
-        _session.update {
-            it.copy(
-                userId = userId,
-                userName = userName,
-                email = email,
-                isAuthenticated = true
-            )
+        _session.update { currentSession ->
+
+            if (currentSession.userId == userId) {
+                // Es el mismo usuario: conservamos su configuración.
+                currentSession.copy(
+                    userName = userName,
+                    email = email,
+                    isAuthenticated = true
+                )
+            } else {
+                // Es otro usuario: iniciamos una sesión limpia.
+                UserSession(
+                    userId = userId,
+                    userName = userName,
+                    email = email,
+                    isAuthenticated = true
+                )
+            }
         }
     }
 
