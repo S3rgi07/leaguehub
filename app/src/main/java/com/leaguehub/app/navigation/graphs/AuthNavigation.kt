@@ -12,6 +12,7 @@ import com.leaguehub.app.feature.onboarding.league.LeagueSelectionRoute
 import com.leaguehub.app.feature.onboarding.permissions.PermissionsRoute
 import com.leaguehub.app.feature.auth.recovery.RecoveryRoute
 import com.leaguehub.app.feature.onboarding.splash.SplashRoute
+import com.leaguehub.app.feature.onboarding.welcome.OnboardingRoute
 
 fun NavGraphBuilder.authNavigation(
     navController: NavHostController
@@ -29,11 +30,11 @@ fun NavGraphBuilder.authNavigation(
     }
 
     composable<OnboardingDestination> {
-        OnboardingScreen(
-            onStartClick = {
+        OnboardingRoute(
+            onStart = {
                 navController.navigate(RegisterDestination)
             },
-            onLoginClick = {
+            onLogin = {
                 navController.navigate(LoginDestination)
             }
         )
