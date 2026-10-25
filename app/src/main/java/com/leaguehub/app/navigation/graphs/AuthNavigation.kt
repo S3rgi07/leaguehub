@@ -16,6 +16,8 @@ import com.leaguehub.app.feature.onboarding.role.UserRole
 import com.leaguehub.app.feature.onboarding.league.LeagueSelectionScreen
 import com.leaguehub.app.feature.onboarding.permissions.PermissionsScreen
 import com.leaguehub.app.feature.auth.login.LoginRoute
+import com.leaguehub.app.feature.auth.register.RegisterRoute
+
 fun NavGraphBuilder.authNavigation(
     navController: NavHostController
 ) {
@@ -59,18 +61,20 @@ fun NavGraphBuilder.authNavigation(
     }
 
     composable<RegisterDestination> {
-        RegisterScreen(
-            name = "",
-            email = "",
-            password = "",
-            onContinueClick = {
-                navController.navigate(RoleSelectionDestination)
+        RegisterRoute(
+            onContinue = {
+                navController.navigate(RoleSelectionDestination) {
+                    popUpTo<RegisterDestination> {
+                        inclusive = true
+                    }
+                }
             },
-            onBackClick = {
+            onBack = {
                 navController.popBackStack()
             }
         )
     }
+
     composable<RoleSelectionDestination> {
         RoleSelectionScreen(
             selectedRole = UserRole.PLAYER,

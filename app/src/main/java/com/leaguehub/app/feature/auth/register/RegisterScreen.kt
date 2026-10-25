@@ -35,6 +35,8 @@ fun RegisterScreen(
     modifier: Modifier = Modifier,
     termsAccepted: Boolean = true,
     passwordVisible: Boolean = false,
+    isLoading: Boolean = false,
+    errorMessage: String? = null,
     onNameChange: (String) -> Unit = {},
     onEmailChange: (String) -> Unit = {},
     onPasswordChange: (String) -> Unit = {},
@@ -173,6 +175,15 @@ fun RegisterScreen(
             )
         }
 
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                modifier = Modifier.padding(top = 8.dp),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
 
         VerifiableProfileCard()
@@ -180,9 +191,9 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         LeagueHubButton(
-            text = "Continuar",
+            text = if (isLoading) "Registrando..." else "Continuar",
             onClick = onContinueClick,
-            enabled = termsAccepted
+            enabled = !isLoading
         )
 
         Text(
