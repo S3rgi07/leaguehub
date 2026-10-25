@@ -17,6 +17,8 @@ import com.leaguehub.app.feature.onboarding.league.LeagueSelectionScreen
 import com.leaguehub.app.feature.onboarding.permissions.PermissionsScreen
 import com.leaguehub.app.feature.auth.login.LoginRoute
 import com.leaguehub.app.feature.auth.register.RegisterRoute
+import com.leaguehub.app.feature.onboarding.role.RoleSelectionRoute
+import com.leaguehub.app.feature.onboarding.league.LeagueSelectionRoute
 
 fun NavGraphBuilder.authNavigation(
     navController: NavHostController
@@ -76,29 +78,35 @@ fun NavGraphBuilder.authNavigation(
     }
 
     composable<RoleSelectionDestination> {
-        RoleSelectionScreen(
-            selectedRole = UserRole.PLAYER,
-            onContinueClick = {
+        RoleSelectionRoute(
+            onContinue = { selectedRole ->
+
+                // Más adelante guardaremos el rol
+                // en un repositorio compartido.
+
                 navController.navigate(LeagueSelectionDestination)
             },
-            onBackClick = {
+
+            onBack = {
                 navController.popBackStack()
+            },
+
+            onConfigureLeague = {
+                navController.navigate(LeagueSelectionDestination)
             }
         )
     }
 
     composable<LeagueSelectionDestination> {
-        LeagueSelectionScreen(
-            leagues = emptyList(),
-            popularLeagues = emptyList(),
-            selectedLeagueId = null,
-            onContinueClick = {
+        LeagueSelectionRoute(
+            onContinue = { selectedLeagueId ->
+                // Más adelante guardaremos la liga seleccionada
+                // en un repositorio compartido.
+
                 navController.navigate(PermissionsDestination)
             },
-            onExploreLaterClick = {
-                navController.navigate(PermissionsDestination)
-            },
-            onBackClick = {
+
+            onBack = {
                 navController.popBackStack()
             }
         )
