@@ -19,6 +19,7 @@ import com.leaguehub.app.feature.auth.login.LoginRoute
 import com.leaguehub.app.feature.auth.register.RegisterRoute
 import com.leaguehub.app.feature.onboarding.role.RoleSelectionRoute
 import com.leaguehub.app.feature.onboarding.league.LeagueSelectionRoute
+import com.leaguehub.app.feature.onboarding.permissions.PermissionsRoute
 
 fun NavGraphBuilder.authNavigation(
     navController: NavHostController
@@ -113,11 +114,13 @@ fun NavGraphBuilder.authNavigation(
     }
 
     composable<PermissionsDestination> {
-        PermissionsScreen(
-            liveMatchesEnabled = true,
-            remindersEnabled = true,
-            smartPreviewEnabled = true,
-            locationEnabled = false,
+        PermissionsRoute(
+            onFinish = {
+                // Pendiente:
+                // Navegar a HomeDestination o
+                // OrganizerDashboardDestination
+                // según el rol seleccionado.
+            }
         )
     }
 
