@@ -50,6 +50,7 @@ fun MatchCenterScreen(
                     MatchCenterTab.SUMMARY -> MatchSummaryContent(events, onFollowLive)
                     MatchCenterTab.LINEUP -> MatchLineupContent(lineups, selectedTeamId, onTeamSelected)
                     MatchCenterTab.STATS -> MatchStatsContent(statistics, momentum)
+                    MatchCenterTab.GALLERY -> MatchGalleryContent()
                 }
             }
         }
@@ -99,3 +100,13 @@ private fun EmptyMatchPreview(tab: MatchCenterTab) {
             emptyList(), falcons.id, emptyList(), emptyList())
     }
 }
+
+@Preview(
+    name = "P05 · Galería",
+    showBackground = true,
+    widthDp = 390,
+    heightDp = 844
+)
+@Composable
+private fun GalleryPreview() =
+    MatchCenterPreviewContent(MatchCenterTab.GALLERY)
