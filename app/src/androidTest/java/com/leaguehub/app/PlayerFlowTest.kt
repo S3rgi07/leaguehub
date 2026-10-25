@@ -66,4 +66,21 @@ class PlayerFlowTest {
         compose.onNodeWithText("Octubre 2026").assertIsDisplayed()
         compose.onNodeWithText("No hay partidos para esta selección.").performScrollTo().assertIsDisplayed()
     }
+
+    @Test fun notificationsSettingsAndExploreCanBeReached() {
+        start()
+        compose.onNodeWithContentDescription("Notificaciones").performClick()
+        compose.onNodeWithText("Notificaciones").assertIsDisplayed()
+        screenshot("P12-notificaciones")
+
+        compose.onNodeWithText("‹").performClick()
+        compose.onNodeWithText("Perfil", useUnmergedTree = true).performClick()
+        compose.onNodeWithContentDescription("Opciones del perfil").performClick()
+        compose.onNodeWithText("Configuración").assertIsDisplayed()
+        screenshot("P13-configuracion")
+
+        compose.onNodeWithText("Cambiar").performScrollTo().performClick()
+        compose.onNodeWithText("Explorar").assertIsDisplayed()
+        screenshot("P14-explorar")
+    }
 }

@@ -21,7 +21,7 @@ fun LeagueHubNavHost(
     ) {
         authNavigation(navController)
 
-        playerNavigation()
+        playerNavigation(navController, onOpenMap, onShare)
 
         organizerNavigation()
     }

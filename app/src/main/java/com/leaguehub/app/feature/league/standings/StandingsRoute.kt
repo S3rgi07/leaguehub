@@ -1,18 +1,22 @@
 package com.leaguehub.app.feature.league.standings
 
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.leaguehub.app.core.components.PlayerDestination
-import com.leaguehub.app.data.fake.*
 import com.leaguehub.app.feature.team.model.TeamUiModel
 
 @Composable
-fun StandingsRoute(onNavigate: (PlayerDestination) -> Unit, onTeamClick: (TeamUiModel) -> Unit, onLeagueClick: () -> Unit) {
-    var scope by rememberSaveable { mutableStateOf(StandingsScope.GENERAL) }
-    val rows = when (scope) {
-        StandingsScope.GENERAL -> fakeStandings
-        StandingsScope.HOME -> fakeHomeStandings
-        StandingsScope.AWAY -> fakeAwayStandings
-    }
-    StandingsScreen(universityLeague, rows, falcons.id, scope, "Actualizada hace 2 min", { scope = it }, onTeamClick, onLeagueClick, onNavigate)
+fun StandingsRoute(
+    onNavigate: (PlayerDestination) -> Unit,
+    onTeamClick: (TeamUiModel) -> Unit,
+    onLeagueClick: () -> Unit,
+    viewModel: StandingsViewModel = viewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    StandingsScreen(
+        state.league, state.standings, state.selectedTeamId, state.scope, state.updatedLabel,
+        { viewModel.onEvent(StandingsEvent.ScopeChanged(it)) }, onTeamClick, onLeagueClick, onNavigate
+    )
 }
