@@ -20,6 +20,7 @@ import com.leaguehub.app.feature.auth.register.RegisterRoute
 import com.leaguehub.app.feature.onboarding.role.RoleSelectionRoute
 import com.leaguehub.app.feature.onboarding.league.LeagueSelectionRoute
 import com.leaguehub.app.feature.onboarding.permissions.PermissionsRoute
+import com.leaguehub.app.feature.auth.recovery.RecoveryRoute
 
 fun NavGraphBuilder.authNavigation(
     navController: NavHostController
@@ -125,12 +126,11 @@ fun NavGraphBuilder.authNavigation(
     }
 
     composable<RecoveryDestination> {
-        RecoveryScreen(
-            email = "",
-            onBackClick = {
+        RecoveryRoute(
+            onBack = {
                 navController.popBackStack()
             },
-            onLoginClick = {
+            onLogin = {
                 navController.popBackStack()
             }
         )

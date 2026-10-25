@@ -18,6 +18,9 @@ import com.leaguehub.app.ui.theme.LeagueHubTheme
 fun RecoveryScreen(
     email: String,
     modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
+    errorMessage: String? = null,
+    codeSent: Boolean = false,
     onEmailChange: (String) -> Unit = {},
     onSendCodeClick: () -> Unit = {},
     onBackClick: () -> Unit = {},
@@ -83,6 +86,8 @@ fun RecoveryScreen(
             onValueChange = onEmailChange,
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            enabled = !isLoading && !codeSent,
+            isError = errorMessage != null,
             shape = MaterialTheme.shapes.medium,
             textStyle = MaterialTheme.typography.bodyMedium,
             placeholder = {
@@ -101,12 +106,35 @@ fun RecoveryScreen(
             )
         )
 
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                modifier = Modifier.padding(top = 8.dp),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+
+        if (codeSent) {
+            Text(
+                text = "Código enviado correctamente a $email",
+                modifier = Modifier.padding(top = 8.dp),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
 
         // Botón principal
         LeagueHubButton(
-            text = "Enviar código",
-            onClick = onSendCodeClick
+            text = when {
+                isLoading -> "Enviando..."
+                codeSent -> "Código enviado"
+                else -> "Enviar código"
+            },
+            onClick = onSendCodeClick,
+            enabled = !isLoading && !codeSent
         )
 
         Spacer(modifier = Modifier.height(32.dp))
