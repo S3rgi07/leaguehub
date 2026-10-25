@@ -4,7 +4,7 @@ import com.leaguehub.app.feature.profile.model.PlayerUiModel
 import com.leaguehub.app.feature.team.model.TeamUiModel
 
 enum class MatchCenterTab(val label: String) {
-    SUMMARY("Resumen"), LINEUP("Alineación"), STATS("Estadísticas")
+    SUMMARY("Resumen"), LINEUP("Alineación"), STATS("Estadísticas"), GALLERY("Galería")
 }
 
 enum class MatchEventType { GOAL, YELLOW_CARD, SUBSTITUTION }
