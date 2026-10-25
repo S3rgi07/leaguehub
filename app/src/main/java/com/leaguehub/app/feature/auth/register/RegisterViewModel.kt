@@ -9,9 +9,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.leaguehub.app.data.repository.UserSessionRepository
 
-class RegisterViewModel : ViewModel() {
-
+class RegisterViewModel(
+    private val sessionRepository: UserSessionRepository
+) : ViewModel() {
     private val _state = MutableStateFlow(RegisterState())
 
     val state: StateFlow<RegisterState> = _state.asStateFlow()
@@ -143,8 +145,24 @@ class RegisterViewModel : ViewModel() {
                 )
             }
 
-            // Registro simulado
+            // Simulación del registro
             delay(1000)
+
+            val userId = "user_${java.util.UUID.randomUUID()}"
+
+            sessionRepository.logout()
+
+            sessionRepository.login(
+                userId = userId,
+                userName = currentState.name.trim(),
+                email = currentState.email.trim()
+            )
+
+            android.util.Log.d(
+                "LeagueHubSession",
+                "Registro: ${sessionRepository.session.value.userName} - " +
+                        sessionRepository.session.value.email
+            )
 
             _state.update {
                 it.copy(

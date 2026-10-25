@@ -5,9 +5,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import com.leaguehub.app.data.repository.UserSessionRepository
 
-class PermissionsViewModel : ViewModel() {
-
+class PermissionsViewModel(
+    private val sessionRepository: UserSessionRepository
+) : ViewModel() {
     private val _state = MutableStateFlow(PermissionsState())
 
     val state: StateFlow<PermissionsState> = _state.asStateFlow()
@@ -40,6 +42,8 @@ class PermissionsViewModel : ViewModel() {
             }
 
             PermissionsEvent.CompleteClicked -> {
+                sessionRepository.completeOnboarding()
+
                 _state.update {
                     it.copy(
                         isCompleted = true,

@@ -124,7 +124,7 @@ class LeagueSelectionViewModel(
 
         // Guardamos la liga en la sesión compartida
         sessionRepository.selectLeague(selectedId)
-        
+
         _state.update {
             it.copy(
                 isSelectionConfirmed = true,

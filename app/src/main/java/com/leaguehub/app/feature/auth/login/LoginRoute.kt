@@ -1,18 +1,35 @@
+
 package com.leaguehub.app.feature.auth.login
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.leaguehub.app.LeagueHubApplication
 
 @Composable
 fun LoginRoute(
     onLoginSuccess: () -> Unit = {},
     onForgotPasswordClick: () -> Unit = {},
-    onCreateAccountClick: () -> Unit = {},
-    viewModel: LoginViewModel = viewModel()
+    onCreateAccountClick: () -> Unit = {}
 ) {
+    val application = LocalContext.current.applicationContext
+            as LeagueHubApplication
+
+    val viewModel: LoginViewModel = viewModel(
+        factory = viewModelFactory {
+            initializer {
+                LoginViewModel(
+                    sessionRepository = application.userSessionRepository
+                )
+            }
+        }
+    )
+
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(state.isLoginSuccessful) {
@@ -27,18 +44,31 @@ fun LoginRoute(
         passwordVisible = state.passwordVisible,
         isLoading = state.isLoading,
         errorMessage = state.errorMessage,
-        onEmailChange = {
-            viewModel.onEvent(LoginEvent.EmailChanged(it))
+
+        onEmailChange = { email ->
+            viewModel.onEvent(
+                LoginEvent.EmailChanged(email)
+            )
         },
-        onPasswordChange = {
-            viewModel.onEvent(LoginEvent.PasswordChanged(it))
+
+        onPasswordChange = { password ->
+            viewModel.onEvent(
+                LoginEvent.PasswordChanged(password)
+            )
         },
+
         onTogglePasswordVisibility = {
-            viewModel.onEvent(LoginEvent.TogglePasswordVisibility)
+            viewModel.onEvent(
+                LoginEvent.TogglePasswordVisibility
+            )
         },
+
         onLoginClick = {
-            viewModel.onEvent(LoginEvent.LoginClicked)
+            viewModel.onEvent(
+                LoginEvent.LoginClicked
+            )
         },
+
         onForgotPasswordClick = onForgotPasswordClick,
         onCreateAccountClick = onCreateAccountClick
     )

@@ -5,12 +5,28 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.leaguehub.app.LeagueHubApplication
 
 @Composable
 fun PermissionsRoute(
-    onFinish: () -> Unit = {},
-    viewModel: PermissionsViewModel = viewModel()
+    onFinish: () -> Unit = {}
 ) {
+    val application = LocalContext.current.applicationContext
+            as LeagueHubApplication
+
+    val viewModel: PermissionsViewModel = viewModel(
+        factory = viewModelFactory {
+            initializer {
+                PermissionsViewModel(
+                    sessionRepository = application.userSessionRepository
+                )
+            }
+        }
+    )
+
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(state.isCompleted, state.isSkipped) {

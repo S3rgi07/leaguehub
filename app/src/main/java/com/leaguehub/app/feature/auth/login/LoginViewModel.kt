@@ -1,7 +1,10 @@
+
 package com.leaguehub.app.feature.auth.login
 
+import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leaguehub.app.data.repository.UserSessionRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -9,7 +12,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class LoginViewModel : ViewModel() {
+class LoginViewModel(
+    private val sessionRepository: UserSessionRepository
+) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginState())
 
@@ -53,7 +58,9 @@ class LoginViewModel : ViewModel() {
     private fun login() {
         val currentState = _state.value
 
-        if (currentState.isLoading || currentState.isLoginSuccessful) return
+        if (currentState.isLoading ||
+            currentState.isLoginSuccessful
+        ) return
 
         if (currentState.email.isBlank() ||
             currentState.password.isBlank()
@@ -66,7 +73,7 @@ class LoginViewModel : ViewModel() {
             return
         }
 
-        if (!android.util.Patterns.EMAIL_ADDRESS
+        if (!Patterns.EMAIL_ADDRESS
                 .matcher(currentState.email.trim())
                 .matches()
         ) {
@@ -86,14 +93,30 @@ class LoginViewModel : ViewModel() {
                 )
             }
 
-            // Simulación de una petición de autenticación
+            // Simulación de autenticación
             delay(1000)
 
+            val email = currentState.email.trim()
+
             val success =
-                currentState.email.trim().equals(
+                email.equals(
                     "sofia@leaguehub.app",
                     ignoreCase = true
-                ) && currentState.password == "LeagueHub123"
+                ) &&
+                        currentState.password == "LeagueHub123"
+
+            if (success) {
+                sessionRepository.login(
+                    userId = "user_sofia_001",
+                    userName = "Sofía Méndez",
+                    email = email
+                )
+
+                android.util.Log.d(
+                    "LeagueHubSession",
+                    "Usuario autenticado: ${sessionRepository.session.value.email}"
+                )
+            }
 
             _state.update {
                 it.copy(
