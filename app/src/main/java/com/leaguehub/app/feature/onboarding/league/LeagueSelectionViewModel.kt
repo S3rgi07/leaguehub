@@ -3,14 +3,16 @@ package com.leaguehub.app.feature.onboarding.league
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.compose.ui.graphics.Color
+import com.leaguehub.app.data.repository.UserSessionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class LeagueSelectionViewModel : ViewModel() {
-
+class LeagueSelectionViewModel(
+    private val sessionRepository: UserSessionRepository
+) : ViewModel() {
     private val allLeagues = listOf(
         LeagueOptionUiModel(
             id = "university",
@@ -48,7 +50,8 @@ class LeagueSelectionViewModel : ViewModel() {
     private val _state = MutableStateFlow(
         LeagueSelectionState(
             leagues = allLeagues,
-            popularLeagues = allPopularLeagues
+            popularLeagues = allPopularLeagues,
+            selectedLeagueId = sessionRepository.session.value.selectedLeagueId
         )
     )
 
@@ -75,8 +78,13 @@ class LeagueSelectionViewModel : ViewModel() {
             }
 
             LeagueSelectionEvent.ExploreLaterClicked -> {
+                sessionRepository.selectLeague(null)
+
                 _state.update {
-                    it.copy(isSkipped = true)
+                    it.copy(
+                        selectedLeagueId = null,
+                        isSkipped = true
+                    )
                 }
             }
         }
@@ -114,6 +122,9 @@ class LeagueSelectionViewModel : ViewModel() {
             return
         }
 
+        // Guardamos la liga en la sesión compartida
+        sessionRepository.selectLeague(selectedId)
+        
         _state.update {
             it.copy(
                 isSelectionConfirmed = true,

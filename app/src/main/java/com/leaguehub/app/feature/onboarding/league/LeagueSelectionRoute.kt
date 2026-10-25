@@ -3,15 +3,31 @@ package com.leaguehub.app.feature.onboarding.league
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.leaguehub.app.LeagueHubApplication
 
 @Composable
 fun LeagueSelectionRoute(
     onContinue: (String?) -> Unit = {},
-    onBack: () -> Unit = {},
-    viewModel: LeagueSelectionViewModel = viewModel()
+    onBack: () -> Unit = {}
 ) {
+    val application = LocalContext.current.applicationContext
+            as LeagueHubApplication
+
+    val viewModel: LeagueSelectionViewModel = viewModel(
+        factory = viewModelFactory {
+            initializer {
+                LeagueSelectionViewModel(
+                    sessionRepository = application.userSessionRepository
+                )
+            }
+        }
+    )
+
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(

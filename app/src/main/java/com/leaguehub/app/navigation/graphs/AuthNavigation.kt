@@ -72,9 +72,10 @@ fun NavGraphBuilder.authNavigation(
     composable<RoleSelectionDestination> {
         RoleSelectionRoute(
             onContinue = { selectedRole ->
-
-                // Más adelante guardaremos el rol
-                // en un repositorio compartido.
+                android.util.Log.d(
+                    "LeagueHubSession",
+                    "Rol seleccionado: $selectedRole"
+                )
 
                 navController.navigate(LeagueSelectionDestination)
             },
