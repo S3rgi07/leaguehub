@@ -1,42 +1,31 @@
 package com.leaguehub.app.navigation.graphs
 
-import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
-import com.leaguehub.app.feature.auth.login.LoginScreen
-import com.leaguehub.app.feature.auth.recovery.RecoveryScreen
-import com.leaguehub.app.feature.auth.register.RegisterScreen
-import com.leaguehub.app.feature.onboarding.splash.SplashScreen
 import com.leaguehub.app.feature.onboarding.welcome.OnboardingScreen
 import com.leaguehub.app.navigation.*
-import kotlinx.coroutines.delay
-import com.leaguehub.app.feature.onboarding.role.RoleSelectionScreen
-import com.leaguehub.app.feature.onboarding.role.UserRole
-import com.leaguehub.app.feature.onboarding.league.LeagueSelectionScreen
-import com.leaguehub.app.feature.onboarding.permissions.PermissionsScreen
 import com.leaguehub.app.feature.auth.login.LoginRoute
 import com.leaguehub.app.feature.auth.register.RegisterRoute
 import com.leaguehub.app.feature.onboarding.role.RoleSelectionRoute
 import com.leaguehub.app.feature.onboarding.league.LeagueSelectionRoute
 import com.leaguehub.app.feature.onboarding.permissions.PermissionsRoute
 import com.leaguehub.app.feature.auth.recovery.RecoveryRoute
+import com.leaguehub.app.feature.onboarding.splash.SplashRoute
 
 fun NavGraphBuilder.authNavigation(
     navController: NavHostController
 ) {
     composable<SplashDestination> {
-        LaunchedEffect(Unit) {
-            delay(2000)
-
-            navController.navigate(OnboardingDestination) {
-                popUpTo<SplashDestination> {
-                    inclusive = true
+        SplashRoute(
+            onFinished = {
+                navController.navigate(OnboardingDestination) {
+                    popUpTo<SplashDestination> {
+                        inclusive = true
+                    }
                 }
             }
-        }
-
-        SplashScreen()
+        )
     }
 
     composable<OnboardingDestination> {
