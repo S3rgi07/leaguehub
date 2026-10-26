@@ -42,6 +42,7 @@ fun NotificationsScreen(
     previousNotifications: List<NotificationUiModel>,
     modifier: Modifier = Modifier,
     selectedCategory: NotificationCategory = NotificationCategory.ALL,
+    unreadCount: Int = (todayNotifications + previousNotifications).count { !it.isRead },
     onCategoryChange: (NotificationCategory) -> Unit = {},
     onNotificationClick: (String) -> Unit = {},
     onMarkAllReadClick: () -> Unit = {},
@@ -78,7 +79,7 @@ fun NotificationsScreen(
                 )
 
                 Text(
-                    text = "4 nuevas",
+                    text = if (unreadCount == 0) "Sin novedades" else "$unreadCount nuevas",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
                 )
