@@ -30,14 +30,17 @@ Center/Organizador en `docs/integrante-3.md`.
 
 - Google Maps: P09 abre la ubicación o las indicaciones mediante una URL segura y un Intent.
 - Compartir de Android: P09 y P11 abren el selector del sistema con el resumen correspondiente.
-- Los datos deportivos todavía se alimentan con fixtures locales. La integración coordinada de
-  Room y del servicio HTTP requerido para la entrega global permanece pendiente.
+- JSONPlaceholder: Retrofit consulta una publicación pública y muestra el anuncio remoto en Home,
+  con manejo de error y reintento.
+- Room: la sesión, el rol, la liga y el estado de onboarding se conservan en `leaguehub.db` y se
+  restauran durante el splash antes de decidir el destino inicial.
 
 ## Librerías
 
 - Jetpack Compose y Material 3 para la interfaz.
 - Navigation Compose con Kotlin Serialization para navegación type-safe.
 - AndroidX Lifecycle, ViewModel y StateFlow para MVI.
+- Room para persistencia local y Retrofit con Gson para la llamada HTTP.
 - JUnit, Compose UI Test y Espresso para pruebas.
 
 ## Verificación
