@@ -23,6 +23,6 @@ fun LeagueHubNavHost(
 
         playerNavigation(navController, onOpenMap, onShare)
 
-        organizerNavigation()
+        organizerNavigation(navController, onShare)
     }
 }

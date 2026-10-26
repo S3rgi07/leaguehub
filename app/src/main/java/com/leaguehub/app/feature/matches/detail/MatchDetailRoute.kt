@@ -10,11 +10,11 @@ import com.leaguehub.app.core.components.PlayerDestination
 import com.leaguehub.app.feature.matches.model.MatchUiModel
 
 @Composable
-fun MatchDetailRoute(matchId: String, onBack: () -> Unit, onOpenMap: (MatchUiModel, Boolean) -> Unit, onShare: (MatchUiModel) -> Unit, onNavigate: (PlayerDestination) -> Unit) {
+fun MatchDetailRoute(matchId: String, onBack: () -> Unit, onOpenMap: (MatchUiModel, Boolean) -> Unit, onShare: (MatchUiModel) -> Unit, onMatchCenter: () -> Unit, onNavigate: (PlayerDestination) -> Unit) {
     val viewModel: MatchDetailViewModel = viewModel(
         key = "match-$matchId",
         factory = viewModelFactory { initializer { MatchDetailViewModel(matchId) } }
     )
     val state by viewModel.state.collectAsStateWithLifecycle()
-    MatchDetailScreen(state.match, onBack, { onOpenMap(state.match, false) }, { onOpenMap(state.match, true) }, { onShare(state.match) }, onNavigate)
+    MatchDetailScreen(state.match, onBack, { onOpenMap(state.match, false) }, { onOpenMap(state.match, true) }, { onShare(state.match) }, onMatchCenter, onNavigate)
 }

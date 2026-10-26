@@ -3,7 +3,6 @@ package com.leaguehub.app.navigation.graphs
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
-import com.leaguehub.app.feature.onboarding.welcome.OnboardingScreen
 import com.leaguehub.app.navigation.*
 import com.leaguehub.app.feature.auth.login.LoginRoute
 import com.leaguehub.app.feature.auth.register.RegisterRoute
@@ -16,9 +15,6 @@ import com.leaguehub.app.feature.onboarding.welcome.OnboardingRoute
 import androidx.compose.ui.platform.LocalContext
 import com.leaguehub.app.LeagueHubApplication
 import com.leaguehub.app.data.session.SessionRole
-import androidx.compose.ui.platform.LocalContext
-
-
 
 fun NavGraphBuilder.authNavigation(
     navController: NavHostController

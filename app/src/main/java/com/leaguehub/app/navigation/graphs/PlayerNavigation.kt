@@ -14,6 +14,7 @@ import com.leaguehub.app.feature.league.detail.LeagueDetailRoute
 import com.leaguehub.app.feature.league.standings.StandingsRoute
 import com.leaguehub.app.feature.matches.calendar.CalendarRoute
 import com.leaguehub.app.feature.matches.detail.MatchDetailRoute
+import com.leaguehub.app.feature.matches.matchcenter.MatchCenterRoute
 import com.leaguehub.app.feature.matches.model.MatchUiModel
 import com.leaguehub.app.feature.notifications.NotificationsRoute
 import com.leaguehub.app.feature.profile.ProfileRoute
@@ -25,6 +26,7 @@ import com.leaguehub.app.navigation.HomeDestination
 import com.leaguehub.app.navigation.LeagueDetailDestination
 import com.leaguehub.app.navigation.LoginDestination
 import com.leaguehub.app.navigation.MatchDetailDestination
+import com.leaguehub.app.navigation.MatchCenterDestination
 import com.leaguehub.app.navigation.NotificationsDestination
 import com.leaguehub.app.navigation.OrganizerDashboardDestination
 import com.leaguehub.app.navigation.PlayerProfileDestination
@@ -94,7 +96,17 @@ fun NavGraphBuilder.playerNavigation(
             onShare = { match ->
                 onShare("${match.homeTeam.name} vs ${match.awayTeam.name}\n${match.date} · ${match.time}\n${match.venue}")
             },
+            onMatchCenter = { navController.navigate(MatchCenterDestination(destination.matchId)) },
             onNavigate = onBottomNavigation
+        )
+    }
+
+    composable<MatchCenterDestination> { entry ->
+        val destination = entry.toRoute<MatchCenterDestination>()
+        MatchCenterRoute(
+            matchId = destination.matchId,
+            onBack = { navController.popBackStack() },
+            onShare = { onShare("Sigue el partido en vivo desde Match Center · LeagueHub") }
         )
     }
 
