@@ -3,6 +3,7 @@ package com.leaguehub.app
 import android.app.Application
 import com.leaguehub.app.data.repository.FollowedTeamsRepository
 import com.leaguehub.app.data.repository.UserSessionRepository
+import com.leaguehub.app.feature.organizer.MatchWorkflowRepository
 import com.leaguehub.app.data.repository.CommunityRepository
 import com.leaguehub.app.data.local.LeagueHubDatabase
 import com.leaguehub.app.data.remote.NetworkModule
@@ -28,5 +29,9 @@ class LeagueHubApplication : Application() {
 
     val followedTeamsRepository: FollowedTeamsRepository by lazy {
         FollowedTeamsRepository()
+    }
+
+    val matchWorkflowRepository: MatchWorkflowRepository by lazy {
+        MatchWorkflowRepository()
     }
 }

@@ -23,6 +23,7 @@ fun MatchDetailScreen(
     onOpenMap: () -> Unit,
     onStartRoute: () -> Unit,
     onShare: () -> Unit,
+    onMatchCenter: () -> Unit,
     onNavigate: (PlayerDestination) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -31,6 +32,9 @@ fun MatchDetailScreen(
         item { PlayerTopBar("Detalle del partido", "Jornada ${match.matchday}", onBack) {
             LeagueIconButton(R.drawable.lh_share, "Compartir partido", onShare)
         } }
+        item {
+            SecondaryAction("Abrir Match Center", onMatchCenter, Modifier.fillMaxWidth(), R.drawable.lh_radio)
+        }
         item {
             HeroCard {
                 LeagueBadge("${match.date} · ${match.time}", Modifier.align(Alignment.CenterHorizontally), icon = R.drawable.lh_calendar)
@@ -83,11 +87,11 @@ fun MatchDetailScreen(
 @Preview(name = "P09 · Programado y mapa", widthDp = 390, heightDp = 844)
 @Composable
 private fun MatchDetailPreview() {
-    LeagueHubTheme { MatchDetailScreen(upcomingFalconsVsTitans, {}, {}, {}, {}, {}) }
+    LeagueHubTheme { MatchDetailScreen(upcomingFalconsVsTitans, {}, {}, {}, {}, {}, {}) }
 }
 
 @Preview(name = "P09 · Finalizado", widthDp = 390, heightDp = 844)
 @Composable
 private fun FinishedMatchPreview() {
-    LeagueHubTheme { MatchDetailScreen(falconsVsNova, {}, {}, {}, {}, {}) }
+    LeagueHubTheme { MatchDetailScreen(falconsVsNova, {}, {}, {}, {}, {}, {}) }
 }

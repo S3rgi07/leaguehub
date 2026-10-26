@@ -49,6 +49,7 @@ fun OcrReviewScreen(
         ) {
             Text(
                 text = "‹",
+                modifier = Modifier.clickable { onBackClick() },
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -99,7 +100,8 @@ fun OcrReviewScreen(
         OcrDataField(
             label = "ÁRBITRO",
             value = data.referee,
-            needsReview = true
+            needsReview = true,
+            onClick = onEditRefereeClick
         )
 
         Text(
@@ -267,7 +269,8 @@ private fun OcrConfidenceCard(
 private fun OcrDataField(
     label: String,
     value: String,
-    needsReview: Boolean = false
+    needsReview: Boolean = false,
+    onClick: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -287,7 +290,7 @@ private fun OcrDataField(
         )
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.clickable(onClick = onClick).padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
