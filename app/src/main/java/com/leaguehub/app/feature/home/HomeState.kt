@@ -12,5 +12,8 @@ data class HomeState(
     val nextMatch: MatchUiModel? = upcomingFalconsVsTitans,
     val recentResults: List<MatchUiModel> = fakeRecentResults,
     val prediction: MatchPredictionUiModel? = fakePrediction,
-    val isRefreshing: Boolean = false
+    val isRefreshing: Boolean = false,
+    val communityAnnouncement: String? = null,
+    val isAnnouncementLoading: Boolean = false,
+    val announcementError: String? = null
 )

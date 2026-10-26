@@ -32,7 +32,10 @@ fun HomeScreen(
     onMatchClick: (MatchUiModel) -> Unit,
     onLeagueClick: () -> Unit,
     onNotificationsClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    communityAnnouncement: String? = null,
+    announcementError: String? = null,
+    onRetryAnnouncement: () -> Unit = {}
 ) {
     PlayerScaffold(PlayerDestination.HOME, onNavigate, modifier) {
         item {
@@ -43,6 +46,21 @@ fun HomeScreen(
                     MutedText("Jornada ${league.currentMatchday} · ${league.name}")
                 }
                 LeagueIconButton(R.drawable.lh_bell, "Notificaciones", onNotificationsClick)
+            }
+        }
+        if (communityAnnouncement != null || announcementError != null) item {
+            LeagueHubCard(Modifier.fillMaxWidth()) {
+                LeagueBadge("COMUNIDAD EN LÍNEA", icon = R.drawable.lh_radio)
+                if (communityAnnouncement != null) {
+                    Text(communityAnnouncement, style = MaterialTheme.typography.titleMedium)
+                } else {
+                    MutedText(announcementError.orEmpty())
+                    SecondaryAction(
+                        "Reintentar conexión",
+                        onRetryAnnouncement,
+                        Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
         item {
