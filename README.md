@@ -178,7 +178,7 @@ cada modelo de teléfono: las pruebas instrumentadas se ejecutan en el emulador 
 
 ## Verificación de la entrega local
 
-La entrega anterior pasó compilación, lint, 20 pruebas unitarias y 25 pruebas
+La entrega alineada a la rúbrica pasó compilación y lint sin errores, 21 pruebas unitarias y 26 pruebas
 instrumentadas en el emulador disponible, incluyendo registro/login, cambio de contraseña,
 recreación de actividad, captura por formularios, edición/eliminación, protección de dependencias,
 modo de lectura, reapertura de datos y migraciones. El APK de `APK/LeagueHub-debug.apk` se
@@ -190,3 +190,5 @@ La refactorización para la rúbrica incorpora pruebas sobre el grafo real: aper
 por ID, regreso entre pantallas, navegación a Respaldos y error/reintento de la consulta remota
 sin impedir la gestión local. Las pruebas de red automatizadas inyectan un servicio controlado;
 la aplicación normal usa el endpoint público real indicado en Servicios.
+
+La validación final del grafo tipado comprueba detalles por ID, regreso entre pantallas y acceso a Respaldos. El escenario de Internet simula primero un fallo y después una respuesta correcta al reintentar, mientras verifica que los datos locales siguen accesibles. También se comprobó que el endpoint público GET /posts/1 responde desde el entorno de desarrollo.
