@@ -8,6 +8,6 @@ sealed interface CloudEvent {
  data object Retry:CloudEvent
  data class AskResolve(val resolution:Resolution?):CloudEvent
  data object ConfirmResolve:CloudEvent
- data object ExportRecovery:CloudEvent
+ data class ExportRecovery(val id:String?=null):CloudEvent
  data class ExportPicked(val uri:Uri?):CloudEvent
 }

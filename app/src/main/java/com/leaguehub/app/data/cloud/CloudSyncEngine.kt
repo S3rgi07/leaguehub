@@ -13,7 +13,8 @@ import kotlinx.serialization.encodeToString
 
 /** No remote callback can write Room outside the current authenticated session or erase dirty data. */
 data class SyncIssue(val id:String,val title:String,val conflict:Boolean,val error:String?)
-data class CloudSyncStatus(val configured:Boolean=false,val bound:Boolean=false,val phase:String="LOCAL",val message:String="Firebase no configurado. La aplicación local sigue disponible.",val pending:Int=0,val lastSync:Long?=null,val issues:List<SyncIssue> = emptyList(),val recoveries:Int=0)
+data class RecoveryCopy(val id:String,val title:String,val savedAt:Long)
+data class CloudSyncStatus(val configured:Boolean=false,val bound:Boolean=false,val phase:String="LOCAL",val message:String="Firebase no configurado. La aplicación local sigue disponible.",val pending:Int=0,val lastSync:Long?=null,val issues:List<SyncIssue> = emptyList(),val recoveries:Int=0,val copies:List<RecoveryCopy> = emptyList())
 class CloudSyncEngine(
  private val db:LeagueHubDatabase,private val sessions:UserSessionRepository,private val identity:CloudIdentityProvider?,private val remote:LeagueRemote?,private val scope:CoroutineScope
 ) {
@@ -23,20 +24,21 @@ class CloudSyncEngine(
  val status=mutable.asStateFlow()
  private val wake=Channel<Unit>(Channel.CONFLATED)
  private var started=false
+ private var profileFailure:String?=null
  private fun valid(binding:CloudBindingEntity)=sessions.session.value.userId==binding.userId && identity?.currentUid==binding.uid
  private fun update(phase:String,message:String) { mutable.update { it.copy(phase=phase,message=message) } }
  @OptIn(ExperimentalCoroutinesApi::class,FlowPreview::class)
  fun start() {
   if(started) return;started=true
   if(identity==null || remote==null) return
-  scope.launch {
+  scope.launch(CoroutineExceptionHandler { _,error->started=false;update("ERROR",cloudError(error)) }) {
    sessions.restoreCompleted.first { it }
    sessions.session.map { it.userId }.distinctUntilChanged().flatMapLatest { user->if(user==null) flowOf(null) else db.syncDao().observeBinding(user) }.combine(identity.identities) { binding,uid->binding?.takeIf { it.uid==uid } }.distinctUntilChanged().collectLatest { binding ->
     if(binding==null) {
      mutable.value=CloudSyncStatus(configured=true,message="Inicia sesión o conecta tu cuenta para activar Firebase.")
-     if(sessions.session.value.userId==null) identity.signOut()
      return@collectLatest
     }
+    profileFailure=null
     mutable.value=CloudSyncStatus(true,true,"CONNECTING","Conectando con Firestore…")
     coroutineScope {
      var serverReady=false
@@ -44,7 +46,9 @@ class CloudSyncEngine(
       db.syncDao().observeAll().collect { rows->
        val own=rows.filter { it.ownerLocalId==binding.userId }
        val leagues=db.competitionDao().allLeagues().first().associateBy { it.id }
-       mutable.update { it.copy(pending=own.count { r->r.localVersion>r.syncedVersion || (r.revision==0L && !r.deleted) },issues=rows.filter { it.conflictPayload!=null || it.lastError!=null }.map { r->SyncIssue(r.leagueId,leagues[r.leagueId]?.name ?: "Liga eliminada",r.conflictPayload!=null,r.lastError) },recoveries=db.syncDao().recoveries(binding.userId).size) }
+       val recoveries=db.syncDao().recoveries(binding.userId)
+       val copies=recoveries.map { record->RecoveryCopy(record.id,runCatching { CloudLeagueStore.json.decodeFromString<CloudLeagueBundle>(record.payload).league.name }.getOrDefault("Copia de recuperación"),record.savedAt) }
+       mutable.update { it.copy(pending=own.count { r->r.localVersion>r.syncedVersion || (r.revision==0L && !r.deleted) },issues=rows.filter { it.conflictPayload!=null || it.lastError!=null }.map { r->SyncIssue(r.leagueId,leagues[r.leagueId]?.name ?: "Liga eliminada",r.conflictPayload!=null,r.lastError) },recoveries=recoveries.size,copies=copies) }
        wake.trySend(Unit)
       }
      }
@@ -61,7 +65,7 @@ class CloudSyncEngine(
            try { codec.apply(document,binding) }
            catch(e:Exception) { if(e is CancellationException) throw e
             val row=db.syncDao().league(document.id)
-            if(row!=null) db.syncDao().save(row.copy(lastError="No se pudo aplicar una liga remota. Los datos locales siguen intactos."))
+            db.syncDao().save((row ?: SyncLeagueEntity(document.id,if(document.ownerUid==binding.uid) binding.userId else "firebase-owner:${document.ownerUid}",revision=document.revision,ownerUid=document.ownerUid)).copy(lastError="No se pudo aplicar una liga remota. Los datos locales siguen intactos."))
             update("ERROR","Una liga remota no es válida; se conservaron tus datos locales.")
            }
           }
@@ -83,8 +87,8 @@ class CloudSyncEngine(
       sessions.session.map { Triple(it.userName,it.role,it.selectedLeagueId) to it.onboardingCompleted }.distinctUntilChanged().debounce(700).collect {
        if(valid(binding)) {
         val session=sessions.session.value
-        try { withTimeout(12_000) { identity.updateProfile(CloudProfile(binding.canonicalId,session.userName.orEmpty(),session.role?.name,session.selectedLeagueId,session.onboardingCompleted)) } }
-        catch(e:Exception) { if(e is CancellationException && e !is TimeoutCancellationException) throw e;update("ERROR",cloudError(e)) }
+        try { withTimeout(12_000) { identity.updateProfile(CloudProfile(binding.canonicalId,session.userName.orEmpty(),session.role?.name,session.selectedLeagueId,session.onboardingCompleted));profileFailure=null } }
+        catch(e:Exception) { if(e is CancellationException && e !is TimeoutCancellationException) throw e;profileFailure=cloudError(e);update("ERROR",cloudError(e)) }
        }
       }
      }
@@ -114,11 +118,13 @@ class CloudSyncEngine(
     update("ERROR",cloudError(e));return
    }
   }
-  val hasConflict=db.syncDao().all().any { it.conflictPayload!=null }
-  update(if(hasConflict) "CONFLICT" else "READY",if(hasConflict) "Hay versiones distintas de una liga. Tus cambios no se han sobrescrito." else "Sincronización al día. Los cambios guardados llegarán a tus otros teléfonos.")
+  val currentRows=db.syncDao().all()
+  val hasConflict=currentRows.any { it.conflictPayload!=null }
+  val hasErrors=currentRows.any { it.lastError!=null } || profileFailure!=null
+  update(if(hasConflict) "CONFLICT" else if(hasErrors) "ERROR" else "READY",if(hasConflict) "Hay versiones distintas de una liga. Tus cambios no se han sobrescrito." else if(hasErrors) profileFailure ?: "Hay ligas pendientes de revisión. Consulta los errores sin borrar tus datos locales." else "Sincronización al día. Los cambios guardados llegarán a tus otros teléfonos.")
   mutable.update { it.copy(lastSync=System.currentTimeMillis()) }
  }
- fun retry() { wake.trySend(Unit) }
+ fun retry() { if(!started) start();wake.trySend(Unit) }
  suspend fun resolve(id:String,keepLocal:Boolean) = lock.withLock {
   val user=requireNotNull(sessions.session.value.userId)
   val binding=requireNotNull(db.syncDao().binding(user)) { "Conecta tu cuenta de Firebase" }
@@ -134,12 +140,12 @@ class CloudSyncEngine(
   }
   wake.trySend(Unit)
  }
- suspend fun exportRecoveries():String {
+ suspend fun exportRecoveries(id:String?=null):String {
   val user=requireNotNull(sessions.session.value.userId)
   val records=db.syncDao().recoveries(user)
   require(records.isNotEmpty()) { "No hay copias de conflictos guardadas" }
-  // A single ZIP isn't needed: export an independent backup of the newest recovery.
-  val bundle=CloudLeagueStore.json.decodeFromString<CloudLeagueBundle>(records.first().payload)
+  val selected=if(id==null) records.first() else requireNotNull(records.find { it.id==id }) { "La copia no corresponde a esta cuenta" }
+  val bundle=CloudLeagueStore.json.decodeFromString<CloudLeagueBundle>(selected.payload)
   val document=BackupDocument("leaguehub-backup",1,java.time.OffsetDateTime.now().toString(),listOf(bundle.league),bundle.clubs,bundle.players,bundle.fixtures,bundle.events,bundle.sheets)
   return kotlinx.serialization.json.Json { prettyPrint=true }.encodeToString(document)
  }

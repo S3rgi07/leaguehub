@@ -74,13 +74,18 @@ class AuthRepository(private val database:LeagueHubDatabase,private val sessionR
   val session=sessionRepository.session.value
   val local=requireNotNull(session.userId?.let { database.userAccountDao().findById(it) }) { "Inicia sesión con una cuenta local válida" }
   val remote=try { cloud.connect(local.email,password,local.userId,local.name,PasswordHasher.matches(password,local.passwordSalt,local.passwordHash)) }
-   catch(e:Exception) { if(e is CancellationException) throw e;throw IllegalArgumentException(cloudError(e),e) }
+   catch(e:Exception) { if(e is CancellationException && e !is TimeoutCancellationException) throw e;throw IllegalArgumentException(cloudError(e),e) }
   require(sessionRepository.session.value.userId==local.userId) { "La sesión cambió; vuelve a iniciar sesión" }
   database.withTransaction {
    bind(local,remote)
    val salt=PasswordHasher.newSalt();database.userAccountDao().updatePassword(local.userId,PasswordHasher.hash(password,salt),salt)
   }
   notice.value=null
+ }
+ val cloudConfigured:Boolean get()=cloud!=null
+ suspend fun resetPassword(email:String)=withContext(Dispatchers.IO) {
+  val provider=requireNotNull(cloud) { "La recuperación por correo requiere configurar Firebase." }
+  try { provider.sendPasswordReset(normalized(email)) } catch(e:Exception) { if(e is CancellationException && e !is TimeoutCancellationException) throw e;throw IllegalArgumentException(cloudError(e),e) }
  }
  suspend fun updateName(name:String)=withContext(Dispatchers.IO) {
   require(name.trim().length>=3) { "Ingresa tu nombre completo" }
@@ -97,7 +102,7 @@ class AuthRepository(private val database:LeagueHubDatabase,private val sessionR
    val account=requireNotNull(session.userId?.let { database.userAccountDao().findById(it) }) { "Esta sesión antigua requiere crear una cuenta" }
    val binding=database.syncDao().binding(account.userId)
    if(cloud!=null && binding!=null) try { cloud.changePassword(binding.uid,account.email,current,replacement) }
-    catch(e:Exception) { if(e is CancellationException) throw e;throw IllegalArgumentException(cloudError(e),e) }
+    catch(e:Exception) { if(e is CancellationException && e !is TimeoutCancellationException) throw e;throw IllegalArgumentException(cloudError(e),e) }
    else require(PasswordHasher.matches(current,account.passwordSalt,account.passwordHash)) { "La contraseña actual es incorrecta" }
    val salt=PasswordHasher.newSalt();database.userAccountDao().updatePassword(account.userId,PasswordHasher.hash(replacement,salt),salt);session
   }

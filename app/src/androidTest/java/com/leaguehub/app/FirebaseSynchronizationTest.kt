@@ -27,8 +27,8 @@ class FirebaseSynchronizationTest {
  private fun gateway(name:String):Pair<FirebaseApp,FirebaseGateway> {
   val options=FirebaseOptions.Builder().setProjectId("demo-leaguehub").setApplicationId("1:123456789:android:abcdef123456").setApiKey("fake-api-key").build()
   val app=FirebaseApp.initializeApp(context,options,name)
-  val auth=FirebaseAuth.getInstance(app).apply { useEmulator("10.0.2.2",9099) }
-  val store=FirebaseFirestore.getInstance(app).apply { firestoreSettings=FirebaseFirestoreSettings.Builder().setPersistenceEnabled(false).build();useEmulator("10.0.2.2",8080) }
+  val auth=FirebaseAuth.getInstance(app).apply { useEmulator("127.0.0.1",9099) }
+  val store=FirebaseFirestore.getInstance(app).apply { firestoreSettings=FirebaseFirestoreSettings.Builder().setPersistenceEnabled(false).build();useEmulator("127.0.0.1",8080) }
   return app to FirebaseGateway(auth,store)
  }
  @Test fun twoPhonesMigrateSyncReconnectResolveConflictsAndKeepDeletionTombstones() = runBlocking {
@@ -41,11 +41,11 @@ class FirebaseSynchronizationTest {
   val (appA,remoteA)=gateway("phone-a-$unique");val (appB,remoteB)=gateway("phone-b-$unique")
   try {
    val email="nube-$unique@prueba.com";val password="NubePrueba2026!"
-   val sessionsA=UserSessionRepository(a.userSessionDao(),scopeA,a.userAccountDao());sessionsA.restoreCompleted.first { it }
+   val sessionsA=UserSessionRepository(a.userSessionDao(),scopeA,a.userAccountDao(),onLoggedOut={remoteA.signOut()});sessionsA.restoreCompleted.first { it }
    AuthRepository(a,sessionsA).register("Ana de nube",email,password)
    val localOwnerA=sessionsA.session.value.userId!!
    sessionsA.selectRole(SessionRole.ORGANIZER)
-   val authA=AuthRepository(a,sessionsA,remoteA);authA.connectCurrent(password)
+   val authA=AuthRepository(a,sessionsA,remoteA);android.util.Log.i("CloudTest","Migrating local account");authA.connectCurrent(password);android.util.Log.i("CloudTest","Account connected")
    assertNotEquals(localOwnerA,remoteA.currentUid)
    val league="cloud-$unique";val club="home-$unique";val away="away-$unique";val player="player-$unique";val playerAway="away-player-$unique";val fixture="match-$unique"
    val repoA=CompetitionRepository(a)
@@ -56,13 +56,14 @@ class FirebaseSynchronizationTest {
    repoA.saveEvent(localOwnerA,MatchEventEntity("goal-$unique",fixture,player,"GOAL",10))
    repoA.saveEvent(localOwnerA,MatchEventEntity("appearance-$unique",fixture,player,"APPEARANCE",90,90,8.5))
    MatchSheetRepository(a).update(localOwnerA,fixture) { it.copy(teams=listOf(TeamSheet(club,"2-2",listOf(player)))) }
+   android.util.Log.i("CloudTest","Starting first sync engine")
    val engineA=CloudSyncEngine(a,sessionsA,remoteA,remoteA,scopeA);engineA.start()
    until { (a.syncDao().league(league)?.revision ?: 0)>0 && a.syncDao().league(league)?.let { it.localVersion==it.syncedVersion }==true }
-   var sessionsB=UserSessionRepository(b.userSessionDao(),scopeB,b.userAccountDao());sessionsB.restoreCompleted.first { it }
+   var sessionsB=UserSessionRepository(b.userSessionDao(),scopeB,b.userAccountDao(),onLoggedOut={remoteB.signOut()});sessionsB.restoreCompleted.first { it }
+   var engineB=CloudSyncEngine(b,sessionsB,remoteB,remoteB,scopeB);engineB.start()
    AuthRepository(b,sessionsB,remoteB).login(email,password)
    val localOwnerB=sessionsB.session.value.userId!!;sessionsB.selectRole(SessionRole.ORGANIZER)
    assertEquals(remoteA.currentUid,localOwnerB)
-   var engineB=CloudSyncEngine(b,sessionsB,remoteB,remoteB,scopeB);engineB.start()
    until { b.competitionDao().player(player)?.accountId==localOwnerB }
    assertEquals(localOwnerB,b.competitionDao().league(league)?.ownerId)
    assertEquals(1,CompetitionRepository(b).snapshot.first { it.events.any { e->e.playerId==player } }.totals(player).goals)
@@ -76,7 +77,7 @@ class FirebaseSynchronizationTest {
    until { a.syncDao().league(league)?.let { it.localVersion==it.syncedVersion }==true }
    scopeB.cancel();b.close();b=openB();scopeB=CoroutineScope(SupervisorJob()+Dispatchers.IO)
    assertTrue(b.syncDao().league(league)!!.localVersion>b.syncDao().league(league)!!.syncedVersion)
-   sessionsB=UserSessionRepository(b.userSessionDao(),scopeB,b.userAccountDao());sessionsB.restoreCompleted.first { it }
+   sessionsB=UserSessionRepository(b.userSessionDao(),scopeB,b.userAccountDao(),onLoggedOut={remoteB.signOut()});sessionsB.restoreCompleted.first { it }
    engineB=CloudSyncEngine(b,sessionsB,remoteB,remoteB,scopeB);engineB.start()
    remoteB.firestore.enableNetwork().awaitCloud()
    until { b.syncDao().league(league)?.conflictPayload!=null }
@@ -97,6 +98,18 @@ class FirebaseSynchronizationTest {
    }
    until { b.competitionDao().league(league)==null && b.syncDao().league(league)?.deleted==true }
    assertTrue(remoteA.firestore.collection("leagues").document(league).get(Source.SERVER).awaitCloud().getBoolean("deleted")!!)
+   val invalid="invalid-$unique"
+   remoteA.push(invalid,remoteA.currentUid!!,remoteA.currentUid!!,0,"{\"version\":99}",false)
+   until { a.syncDao().league(invalid)?.lastError!=null && engineA.status.value.phase=="ERROR" }
+   assertNull(a.competitionDao().league(invalid))
+   assertEquals("ERROR",engineA.status.value.phase)
+   remoteA.push(invalid,remoteA.currentUid!!,remoteA.currentUid!!,1,"",true)
+   until { a.syncDao().league(invalid)?.deleted==true && a.syncDao().league(invalid)?.lastError==null }
+   remoteA.sendPasswordReset(email)
+   authA.changePassword(password,"NubeNueva2026!")
+   val authB=AuthRepository(b,sessionsB,remoteB)
+   authB.login(email,"NubeNueva2026!")
+   assertTrue(runCatching { authB.login(email,password) }.isFailure)
    sessionsB.logoutAndWait();until { remoteB.currentUid==null }
   } finally {
    scopeA.cancel();scopeB.cancel();a.close();b.close();context.deleteDatabase(dbName)

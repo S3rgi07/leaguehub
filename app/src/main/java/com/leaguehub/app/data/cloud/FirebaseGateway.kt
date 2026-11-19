@@ -30,6 +30,7 @@ class FirebaseGateway(val auth:FirebaseAuth,val firestore:FirebaseFirestore):Clo
    } else CloudIdentity(user.uid,requireNotNull(old.getString("canonicalId")),old.getString("name") ?: email.substringBefore('@'),old.getString("role"),old.getString("selectedLeagueId"),old.getBoolean("onboardingCompleted") ?: false)
   }.awaitCloud()
  }
+ override suspend fun sendPasswordReset(email:String) { withTimeout(20_000) { auth.sendPasswordResetEmail(email).awaitCloud() } }
  override suspend fun changePassword(uid:String,email:String,current:String,replacement:String)=withTimeout(20_000) {
   val user=requireNotNull(auth.currentUser) { "Inicia sesión con Firebase antes de cambiar la contraseña" }
   require(user.uid==uid) { "La sesión de Firebase no corresponde a esta cuenta" }

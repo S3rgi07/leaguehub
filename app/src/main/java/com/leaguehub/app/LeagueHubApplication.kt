@@ -28,7 +28,7 @@ open class LeagueHubApplication : Application() {
     }
 
     val userSessionRepository: UserSessionRepository by lazy {
-        UserSessionRepository(database.userSessionDao(), applicationScope, database.userAccountDao(), { storageErrors.tryEmit(it) })
+        UserSessionRepository(database.userSessionDao(), applicationScope, database.userAccountDao(), { storageErrors.tryEmit(it) }, { firebaseGateway?.signOut() })
     }
 
     val storageErrors = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 8)

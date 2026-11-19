@@ -18,6 +18,7 @@ interface CloudIdentityProvider {
  val currentUid:String?
  val identities:Flow<String?>
  suspend fun connect(email:String,password:String,localId:String?,localName:String?,localPasswordValid:Boolean,register:Boolean=false):CloudIdentity
+ suspend fun sendPasswordReset(email:String)
  suspend fun changePassword(uid:String,email:String,current:String,replacement:String)
  suspend fun updateProfile(profile:CloudProfile)
  fun signOut()
