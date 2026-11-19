@@ -44,7 +44,7 @@ data object StandingsDestination
 
 @Serializable
 data class PlayerProfileDestination(
-    val playerId: String
+    val playerId: String? = null
 )
 
 @Serializable

@@ -8,6 +8,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
 import com.leaguehub.app.feature.player.PlayerApp
 import com.leaguehub.app.ui.theme.LeagueHubTheme
+import kotlinx.coroutines.flow.first
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -15,7 +16,14 @@ import java.io.File
 class PlayerFlowTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
+    private var greeting = ""
+    private var profileName = ""
     private fun start() {
+        val application = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as LeagueHubApplication
+        kotlinx.coroutines.runBlocking { application.userSessionRepository.restoreCompleted.first { it } }
+        val name = application.userSessionRepository.session.value.userName?.takeIf { it.isNotBlank() } ?: "Mi perfil"
+        profileName = name
+        greeting = "Hola, ${name.substringBefore(' ')}"
         compose.setContent { LeagueHubTheme { PlayerApp({ _, _ -> }, {}) } }
     }
 
@@ -31,7 +39,7 @@ class PlayerFlowTest {
 
     @Test fun allSevenScreensCanBeReached() {
         start()
-        compose.onNodeWithText("Hola, Sofía").assertIsDisplayed()
+        compose.onNodeWithText(greeting).assertIsDisplayed()
         screenshot("P01-inicio")
         compose.onNodeWithText("Ver mapa de la cancha").performScrollTo().performClick()
         compose.onNodeWithText("Detalle del partido").assertIsDisplayed()
@@ -44,13 +52,19 @@ class PlayerFlowTest {
         // Return to the header before capturing the initial view.
         compose.onNodeWithText("Falcons", useUnmergedTree = true).performScrollTo()
         screenshot("P11-equipo")
-        compose.onNodeWithText("Sofía Méndez", useUnmergedTree = true).performScrollTo().performClick()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Ver plantilla completa"))
+        compose.onNodeWithText("Ver plantilla completa").performClick()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Sofía Méndez"))
+        compose.onNodeWithText("Sofía Méndez", useUnmergedTree = true).performClick()
         compose.onNodeWithText("Goles", useUnmergedTree = true).assertIsDisplayed()
         screenshot("P07-perfil")
+        compose.onNodeWithText("Perfil", useUnmergedTree = true).performClick()
+        compose.onNodeWithText(profileName).assertIsDisplayed()
         compose.onAllNodesWithText("Partidos", useUnmergedTree = true).onLast().performClick()
         compose.onNodeWithText("Calendario").assertIsDisplayed()
         screenshot("P08-calendario")
         compose.onNodeWithText("Inicio", useUnmergedTree = true).performClick()
+        compose.onAllNodes(hasScrollAction()).onFirst().performScrollToIndex(0)
         compose.onNodeWithText("Jornada 8 · Liga Universitaria GT", useUnmergedTree = true).performClick()
         compose.onNodeWithText("Equipos destacados").assertIsDisplayed()
         screenshot("P10-liga")

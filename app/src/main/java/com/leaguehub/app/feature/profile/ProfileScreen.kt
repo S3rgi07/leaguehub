@@ -25,7 +25,7 @@ import java.util.Locale
 @Composable
 fun ProfileScreen(
     player: PlayerUiModel,
-    team: TeamUiModel,
+    team: TeamUiModel?,
     onTeamClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onNavigate: (PlayerDestination) -> Unit,
@@ -37,9 +37,9 @@ fun ProfileScreen(
                 Column(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     PlayerAvatar(player.name, size = 88.dp)
                     Text(player.name, style = MaterialTheme.typography.headlineLarge)
-                    Text("${team.name} · ${player.position}", Modifier.clickable(role = Role.Button, onClick = onTeamClick),
+                    Text("${team?.name ?: "Sin equipo"} · ${player.position}", Modifier.clickable(enabled = team != null, role = Role.Button, onClick = onTeamClick),
                         style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (team != null) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         LeagueBadge("#${player.number}", color = MaterialTheme.colorScheme.secondary)
                         LeagueBadge(if (player.isStarter) "TITULAR" else "PLANTILLA")
                     }

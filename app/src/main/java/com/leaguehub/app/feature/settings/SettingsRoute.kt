@@ -26,7 +26,7 @@ fun SettingsRoute(
     val viewModel: SettingsViewModel = viewModel(
         factory = viewModelFactory {
             initializer {
-                SettingsViewModel(application.userSessionRepository, application.followedTeamsRepository)
+                SettingsViewModel(application.userSessionRepository, application.followedTeamsRepository, application.appearanceState)
             }
         }
     )

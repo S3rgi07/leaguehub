@@ -3,16 +3,16 @@ package com.leaguehub.app.feature.auth.register
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.leaguehub.app.data.repository.UserSessionRepository
+
 
 class RegisterViewModel(
-    private val sessionRepository: UserSessionRepository
+    private val authRepository: com.leaguehub.app.data.repository.AuthRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(RegisterState())
 
@@ -145,30 +145,14 @@ class RegisterViewModel(
                 )
             }
 
-            // Simulación del registro
-            delay(1000)
-
-            val userId = "user_${java.util.UUID.randomUUID()}"
-
-            sessionRepository.logout()
-
-            sessionRepository.login(
-                userId = userId,
-                userName = currentState.name.trim(),
-                email = currentState.email.trim()
-            )
-
-            android.util.Log.d(
-                "LeagueHubSession",
-                "Registro: ${sessionRepository.session.value.userName} - " +
-                        sessionRepository.session.value.email
-            )
-
-            _state.update {
-                it.copy(
-                    isLoading = false,
-                    isRegistrationSuccessful = true
-                )
+            try {
+                authRepository.register(currentState.name, currentState.email, currentState.password)
+                _state.update { it.copy(isLoading = false, isRegistrationSuccessful = true, password = "") }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                _state.update { it.copy(isLoading = false, errorMessage =
+                    if (error is IllegalArgumentException) error.message else "No se pudo guardar la cuenta. Inténtalo de nuevo.") }
             }
         }
     }

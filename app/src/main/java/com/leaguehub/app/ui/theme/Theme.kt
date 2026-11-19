@@ -2,6 +2,7 @@ package com.leaguehub.app.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 
 import androidx.compose.runtime.Composable
 
@@ -35,11 +36,17 @@ private val LeagueHubColorScheme = darkColorScheme(
 )
 
 @Composable
+fun LeagueHubTheme(content: @Composable () -> Unit) {
+    LeagueHubTheme(darkTheme = true, content = content)
+}
+
+@Composable
 fun LeagueHubTheme(
+    darkTheme: Boolean,
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = LeagueHubColorScheme,
+        colorScheme = if (darkTheme) LeagueHubColorScheme else lightColorScheme(),
         typography = LeagueHubTypography,
         shapes = LeagueHubShapes,
         content = content

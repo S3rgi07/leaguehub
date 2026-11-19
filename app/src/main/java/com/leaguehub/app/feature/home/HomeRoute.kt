@@ -21,7 +21,7 @@ fun HomeRoute(
     val application = LocalContext.current.applicationContext as LeagueHubApplication
     val viewModel: HomeViewModel = viewModel(
         factory = viewModelFactory {
-            initializer { HomeViewModel(application.communityRepository) }
+            initializer { HomeViewModel(application.communityRepository, application.userSessionRepository) }
         }
     )
     val state by viewModel.state.collectAsStateWithLifecycle()

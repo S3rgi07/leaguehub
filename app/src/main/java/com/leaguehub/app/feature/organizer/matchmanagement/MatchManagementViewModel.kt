@@ -1,6 +1,8 @@
 package com.leaguehub.app.feature.organizer.matchmanagement
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import com.leaguehub.app.feature.organizer.MatchWorkflowRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -8,14 +10,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 class MatchManagementViewModel(
-    workflowRepository: MatchWorkflowRepository
+    private val workflowRepository: MatchWorkflowRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(MatchManagementState(data = workflowRepository.state.value.management))
     val state: StateFlow<MatchManagementState> = _state.asStateFlow()
 
+    init { if (workflowRepository.isPersistent) viewModelScope.launch { workflowRepository.state.collect { workflow ->
+        _state.update { it.copy(data = workflow.management) }
+    } } }
+
     fun onEvent(event: MatchManagementEvent) {
         when (event) {
-            is MatchManagementEvent.RosterSelected -> _state.update { current ->
+            is MatchManagementEvent.RosterSelected -> {
+                workflowRepository.completeRoster(event.teamId)
+                _state.update { current ->
                 current.copy(
                     selectedRosterId = event.teamId,
                     errorMessage = null,
@@ -27,6 +35,7 @@ class MatchManagementViewModel(
                         }
                     )
                 )
+            }
             }
             MatchManagementEvent.StartLiveClicked -> {
                 val incomplete = _state.value.data.rosters.any { it.missing > 0 }

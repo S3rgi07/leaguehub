@@ -8,7 +8,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun NotificationsRoute(
     onBack: () -> Unit,
-    viewModel: NotificationsViewModel = viewModel()
+    viewModel: NotificationsViewModel = notificationsViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     NotificationsScreen(

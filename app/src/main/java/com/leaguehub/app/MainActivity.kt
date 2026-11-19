@@ -8,6 +8,9 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leaguehub.app.feature.matches.model.MatchUiModel
 import com.leaguehub.app.navigation.LeagueHubNavHost
 import com.leaguehub.app.ui.theme.LeagueHubTheme
@@ -20,7 +23,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            LeagueHubTheme {
+            LaunchedEffect(Unit) { (application as LeagueHubApplication).storageErrors.collect { Toast.makeText(this@MainActivity, it, Toast.LENGTH_LONG).show() } }
+            val appearance by (application as LeagueHubApplication).appearanceState.state.collectAsStateWithLifecycle()
+            LeagueHubTheme(darkTheme = appearance != "Claro") {
                 LeagueHubNavHost(
                     onOpenMap = { match, directions ->
                         openMatchMap(match, directions)
