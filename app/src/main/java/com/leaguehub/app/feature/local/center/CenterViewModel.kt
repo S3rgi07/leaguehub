@@ -12,7 +12,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 class CenterViewModel(store:LocalHubViewModel,private val id:String,private val repository:MatchSheetRepository?,private val resolver:ContentResolver,private val saved:SavedStateHandle=SavedStateHandle()):LocalFeatureViewModel(store) {
- private data class Controls(val busy:Boolean=false,val error:String?=null,val message:String?=null,val editing:Boolean=false,val formation:String="2-2",val draft:List<String> = emptyList(),val outId:String="",val inId:String="",val minute:String="65",val duration:String="90",val clock:String="0")
+ private data class Controls(val busy:Boolean=false,val error:String?=null,val message:String?=null,val editing:Boolean=false,val formation:String="2-2",val draft:List<String> = emptyList(),val outId:String="",val inId:String="",val minute:String="65",val duration:String="90",val clock:String="0",val confirmReset:Boolean=false)
  private val controls=MutableStateFlow(Controls())
  private val tab=saved.getStateFlow("tab",0);private val team=saved.getStateFlow("team","");private val court=saved.getStateFlow("court",130)
  @OptIn(ExperimentalCoroutinesApi::class)
@@ -33,7 +33,7 @@ class CenterViewModel(store:LocalHubViewModel,private val id:String,private val 
   val stats=fixture?.let { f->listOf("GOAL" to "Goles registrados","ASSIST" to "Asistencias","YELLOW" to "Amarillas","RED" to "Rojas","APPEARANCE" to "Participaciones").map { (kind,label)->MatchStatisticUiModel(label,count(kind,f.homeId),count(kind,f.awayId)) } }.orEmpty()
   val timeline=events.filter { it.kind!="APPEARANCE" }.map { e->EventRow(e.id,"${e.minute}′ · ${eventTitle(e.kind)}",s.data.players.find { it.id==e.playerId }?.name.orEmpty(),null) }+document.substitutions.mapIndexed { i,sub->EventRow("sub-$i","${sub.minute}′ · Sustitución","${s.data.players.find { it.id==sub.outId }?.name} → ${s.data.players.find { it.id==sub.inId }?.name}",null) }
   CenterState(s.ui(),model,s.league?.name.orEmpty(),MatchCenterTab.entries.getOrElse(selection.first) { MatchCenterTab.SUMMARY },selected,lineups,stats,timeline.sortedByDescending { it.title.substringBefore('′').toIntOrNull() ?: 0 },document,roster.map { CourtPlayer(it.id,it.name,it.number,it.id in courtIds) },s.canManage,c.busy,c.error,c.message,c.editing,c.formation,c.draft,c.outId,c.inId,c.minute,c.duration,c.clock,selection.third,
-   document.substitutions.filter { it.clubId==selected }.map { sub->"${sub.minute}′ · ${s.data.players.find { it.id==sub.outId }?.name} → ${s.data.players.find { it.id==sub.inId }?.name}" })
+   document.substitutions.filter { it.clubId==selected }.map { sub->"${sub.minute}′ · ${s.data.players.find { it.id==sub.outId }?.name} → ${s.data.players.find { it.id==sub.inId }?.name}" },c.confirmReset)
  }.stateIn(viewModelScope,SharingStarted.Eagerly,CenterState())
  private fun positions(formation:String):List<Pair<Float,Float>> {
   val lines=formation.split('-').map { it.toIntOrNull() ?: 0 };val rows=mutableListOf(.12f to .5f)
@@ -54,10 +54,12 @@ class CenterViewModel(store:LocalHubViewModel,private val id:String,private val 
   is CenterEvent.CourtMinute->saved["court"]=e.minute.coerceIn(0,130)
   is CenterEvent.Action->{ if(e.action==MatchAction.EVENTS) effect(LocalEffect.MatchEvents(id)) else matchAction(id,e.action) }
   CenterEvent.EditLineup->{val entry=state.value.sheet.teams.find { it.clubId==state.value.selectedTeam };controls.update { it.copy(editing=true,formation=entry?.formation ?: "2-2",draft=entry?.starters.orEmpty(),error=null) }}
+  is CenterEvent.ResetPrompt->controls.update { it.copy(confirmReset=e.visible) }
+  CenterEvent.ResetLineup->{val selected=state.value.selectedTeam;action { repo,owner->repo.update(owner,id) { it.copy(teams=it.teams.filter { t->t.clubId!=selected },substitutions=it.substitutions.filter { sub->sub.clubId!=selected }) };controls.update { it.copy(confirmReset=false,editing=false) } }}
   CenterEvent.CancelLineup->controls.update { it.copy(editing=false,error=null) }
   is CenterEvent.Formation->if(e.value in listOf("2-2","2-3-1","4-3-3")) controls.update { it.copy(formation=e.value) }
   is CenterEvent.TogglePlayer->if(state.value.players.any { it.id==e.id }) controls.update { it.copy(draft=if(e.id in it.draft) it.draft-e.id else it.draft+e.id) }
-  CenterEvent.SaveLineup->{val selected=state.value.selectedTeam;val draft=controls.value;action { repo,owner->repo.update(owner,id) { current->require(current.substitutions.none { it.clubId==selected }) { "Deshaz los cambios de este equipo antes de modificar sus titulares" };current.copy(teams=current.teams.filter { it.clubId!=selected }+TeamSheet(selected,draft.formation,draft.draft)) };controls.update { it.copy(editing=false) } }}
+  CenterEvent.SaveLineup->{val selected=state.value.selectedTeam;val draft=controls.value;action { repo,owner->repo.update(owner,id) { current->require(current.substitutions.none { it.clubId==selected } || current.teams.find { it.clubId==selected }==TeamSheet(selected,draft.formation,draft.draft)) { "Deshaz los cambios de este equipo antes de modificar sus titulares" };current.copy(teams=current.teams.filter { it.clubId!=selected }+TeamSheet(selected,draft.formation,draft.draft)) };controls.update { it.copy(editing=false) } }}
   is CenterEvent.Field->controls.update { c->when(e.key) { "out"->c.copy(outId=e.value);"in"->c.copy(inId=e.value);"minute"->c.copy(minute=e.value);"duration"->c.copy(duration=e.value);"clock"->c.copy(clock=e.value);else->c } }
   CenterEvent.Substitute->{val c=controls.value;val selected=state.value.selectedTeam;action { repo,owner->val minute=requireNotNull(c.minute.toIntOrNull()) { "Ingresa el minuto del cambio" };repo.update(owner,id) { it.copy(substitutions=it.substitutions+Substitution(selected,c.outId,c.inId,minute)) } }}
   CenterEvent.UndoChange->{val selected=state.value.selectedTeam;action { repo,owner->repo.update(owner,id) { current->val index=current.substitutions.indexOfLast { it.clubId==selected };current.copy(substitutions=current.substitutions.filterIndexed { i,_->i!=index }) } }}

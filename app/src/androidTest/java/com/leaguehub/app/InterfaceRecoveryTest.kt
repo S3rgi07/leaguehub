@@ -24,7 +24,7 @@ class InterfaceRecoveryTest {
  private val context=ApplicationProvider.getApplicationContext<Context>()
  private fun capture(name:String) {
   compose.waitForIdle()
-  val directory=File(context.getExternalFilesDir(null),"interface-recovery").apply { mkdirs() }
+  val directory=(androidx.test.platform.app.InstrumentationRegistry.getArguments().getString("additionalTestOutputDir")?.let { File(it,"interface-recovery") } ?: File(context.getExternalFilesDir(null),"interface-recovery")).apply { mkdirs() }
   File(directory,"$name.png").outputStream().use { compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG,100,it) }
  }
  @Test fun restoredScreensDisplayAccountStatisticsAndFilterRealFixtures() {

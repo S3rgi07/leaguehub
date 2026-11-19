@@ -11,6 +11,8 @@ sealed interface CenterEvent {
  data object CancelLineup:CenterEvent
  data class Formation(val value:String):CenterEvent
  data class TogglePlayer(val id:String):CenterEvent
+ data class ResetPrompt(val visible:Boolean):CenterEvent
+ data object ResetLineup:CenterEvent
  data object SaveLineup:CenterEvent
  data class Field(val key:String,val value:String):CenterEvent
  data object Substitute:CenterEvent

@@ -64,7 +64,7 @@ object DemoAccount {
                             }
                             roster.forEachIndexed { index, player ->
                                 val rating = if (team == 0 && index == 0) listOf(8.1, 7.4, 8.8, 8.3, 9.0)[round] else 6.5 + (round + index) % 6 * .4
-                                repository.saveEvent(USER_ID, MatchEventEntity("${fixture.id}-$team-app-$index", fixture.id, player.id, "APPEARANCE", 90, if (index < 3) 90 else 65, rating))
+                                repository.saveEvent(USER_ID, MatchEventEntity("${fixture.id}-$team-app-$index", fixture.id, player.id, "APPEARANCE", 90, if (index < 3 || index == 5) 90 else if (index == 4) 25 else 65, rating))
                             }
                             if (round == 3 && team == away) repository.saveEvent(USER_ID, MatchEventEntity("${fixture.id}-$team-red", fixture.id, roster.last().id, "RED", 65))
                             if (round % 2 == 0) repository.saveEvent(USER_ID, MatchEventEntity("${fixture.id}-$team-yellow", fixture.id, roster[0].id, "YELLOW", 68))
@@ -92,7 +92,11 @@ object DemoAccount {
                         val starters=listOfNotNull(keeper)+roster.filter { it.id!=keeper?.id }.take(4)
                         if(starters.size==5) TeamSheet(club,"2-2",starters.map { it.id }) else null
                     }
-                    repository.update(USER_ID,fixture.id) { it.copy(teams=teams) }
+                    val substitutions=if(fixture.homeScore!=null) teams.mapNotNull { team ->
+                        val bench=players.firstOrNull { it.clubId==team.clubId && it.id !in team.starters }
+                        bench?.let { Substitution(team.clubId,team.starters.last(),it.id,65) }
+                    } else emptyList()
+                    repository.update(USER_ID,fixture.id) { it.copy(teams=teams,substitutions=substitutions) }
                 }
             }
             dao.upsert(UserDataEntity(USER_ID,"demo-sheets-v1","true"))

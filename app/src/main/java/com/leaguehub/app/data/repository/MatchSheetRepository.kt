@@ -65,7 +65,12 @@ class MatchSheetRepository(private val database:LeagueHubDatabase) {
         val league=requireNotNull(database.competitionDao().league(fixture.leagueId))
         require(actor==league.ownerId) { "Solo el organizador de esta liga puede modificar el partido" }
         val next=change(decode(database.userDataDao().read(actor,key(matchId))))
-        validate(next,fixture,database.competitionDao().allPlayers().first())
+        val players=database.competitionDao().allPlayers().first()
+        validate(next,fixture,players)
+        database.competitionDao().events(matchId).filter { it.kind in listOf("GOAL","ASSIST") }.forEach { event ->
+            val player=players.find { it.id==event.playerId } ?: return@forEach
+            if(next.teams.any { it.clubId==player.clubId }) require(player.id in playersOnCourt(next,player.clubId,event.minute)) { "La alineación deja fuera de cancha a ${player.name} en un evento registrado" }
+        }
         database.userDataDao().upsert(UserDataEntity(actor,key(matchId),json.encodeToString(next)))
     }
     suspend fun applyMinutes(actor:String,matchId:String,duration:Int) = database.withTransaction {
@@ -75,7 +80,11 @@ class MatchSheetRepository(private val database:LeagueHubDatabase) {
         require(sheet.teams.isNotEmpty()) { "Guarda una alineación antes de calcular minutos" }
         val repository=CompetitionRepository(database)
         val events=database.competitionDao().events(matchId)
-        sheet.teams.forEach { team -> minutes(sheet,team.clubId,duration).forEach { (player,total) ->
+        val players=database.competitionDao().allPlayers().first()
+        sheet.teams.forEach { team ->
+          val computed=minutes(sheet,team.clubId,duration)
+          events.filter { e->e.kind=="APPEARANCE" && e.playerId !in computed && players.any { it.id==e.playerId && it.clubId==team.clubId } }.forEach { database.competitionDao().delete(it) }
+          computed.forEach { (player,total) ->
             val existing=events.find { it.playerId==player && it.kind=="APPEARANCE" }
             repository.saveEvent(actor,MatchEventEntity(existing?.id ?: java.util.UUID.randomUUID().toString(),matchId,player,"APPEARANCE",duration,total,existing?.rating))
         } }

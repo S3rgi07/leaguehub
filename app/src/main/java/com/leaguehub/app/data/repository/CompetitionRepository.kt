@@ -56,7 +56,15 @@ class CompetitionRepository(private val database: LeagueHubDatabase) {
             (fixture.homeScore != null && fixture.awayScore != null && fixture.homeScore >= 0 && fixture.awayScore >= 0)) { "Ingresa ambos marcadores sin negativos" }
         val events = dao.events(fixture.id)
         dao.fixture(fixture.id)?.let { old ->
-            require(events.isEmpty() || (old.homeId == fixture.homeId && old.awayId == fixture.awayId)) { "Elimina los eventos antes de cambiar los equipos" }
+            val sheet=MatchSheetRepository.decode(database.userDataDao().read(ownerId,MatchSheetRepository.key(fixture.id)))
+            require((events.isEmpty() && sheet.teams.isEmpty() && sheet.substitutions.isEmpty()) || (old.homeId == fixture.homeId && old.awayId == fixture.awayId)) { "Quita los eventos y las alineaciones antes de cambiar los equipos" }
+        }
+        val previous=dao.fixture(fixture.id)
+        if(previous?.homeScore!=null && fixture.homeScore==null) {
+            database.userDataDao().read(ownerId,MatchSheetRepository.key(fixture.id))?.let { payload ->
+                val reset=MatchSheetRepository.decode(payload).copy(phase="SCHEDULED",minute=0)
+                database.userDataDao().upsert(UserDataEntity(ownerId,MatchSheetRepository.key(fixture.id),MatchSheetRepository.json.encodeToString(MatchSheet.serializer(),reset)))
+            }
         }
         validateGoals(fixture, events)
         dao.save(fixture.copy(venue = fixture.venue.trim()))
@@ -76,6 +84,8 @@ class CompetitionRepository(private val database: LeagueHubDatabase) {
         dao.event(event.id)?.let { require(it.fixtureId == event.fixtureId) { "No puedes trasladar un evento" } }
         val player = requireNotNull(dao.player(event.playerId)) { "Jugador inexistente" }
         require(player.clubId == fixture.homeId || player.clubId == fixture.awayId) { "El jugador no participa en este partido" }
+        val sheet=MatchSheetRepository.decode(database.userDataDao().read(ownerId,MatchSheetRepository.key(fixture.id)))
+        if(event.kind in listOf("GOAL","ASSIST") && sheet.teams.any { it.clubId==player.clubId }) require(player.id in MatchSheetRepository.playersOnCourt(sheet,player.clubId,event.minute)) { "El jugador no estaba en cancha en ese minuto. Revisa su alineación y cambios." }
         require(event.kind in listOf("GOAL", "ASSIST", "YELLOW", "RED", "APPEARANCE")) { "Tipo de evento inválido" }
         require(event.minute in 0..130 && event.minutesPlayed in 0..130) { "Los minutos deben estar entre 0 y 130" }
         require(event.rating == null || (event.rating.isFinite() && event.rating in 0.0..10.0)) { "La valoración debe estar entre 0 y 10" }

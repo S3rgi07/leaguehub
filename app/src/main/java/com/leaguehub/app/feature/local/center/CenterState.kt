@@ -10,5 +10,5 @@ data class CenterState(
  val events:List<EventRow> = emptyList(),val sheet:MatchSheet=MatchSheet(),val players:List<CourtPlayer> = emptyList(),val canManage:Boolean=false,
  val busy:Boolean=false,val error:String?=null,val message:String?=null,val editing:Boolean=false,val formation:String="2-2",val draft:List<String> = emptyList(),
  val outId:String="",val inId:String="",val changeMinute:String="65",val duration:String="90",val clock:String="0",val courtMinute:Int=130,
- val substitutions:List<String> = emptyList()
+ val substitutions:List<String> = emptyList(),val confirmReset:Boolean=false
 )

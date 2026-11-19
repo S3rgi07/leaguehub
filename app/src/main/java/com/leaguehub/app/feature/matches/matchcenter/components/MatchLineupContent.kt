@@ -70,7 +70,7 @@ private fun Pitch(lineup: TeamLineupUiModel) {
                 Box(Modifier.size(28.dp).background(color, CircleShape), contentAlignment = Alignment.Center) {
                     Text("${entry.player.number}", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.bodySmall)
                 }
-                Text(if (entry.player.number == 10 && entry.player.name.startsWith("Sofía")) "Sofía" else entry.player.name,
+                Text(entry.player.name.substringBefore(" "),
                     style = MaterialTheme.typography.bodySmall, maxLines = 1)
             }
         }

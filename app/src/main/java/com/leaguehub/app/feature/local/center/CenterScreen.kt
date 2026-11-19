@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.leaguehub.app.R
 import com.leaguehub.app.core.components.*
 import com.leaguehub.app.feature.local.*
+import com.leaguehub.app.feature.matches.matchcenter.components.MatchCenterHeader
 import com.leaguehub.app.feature.matches.matchcenter.components.MatchCenterTabs
 import com.leaguehub.app.feature.matches.matchcenter.components.MatchLineupContent
 import com.leaguehub.app.feature.matches.matchcenter.components.MatchStatsContent
@@ -27,12 +28,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable fun CenterScreen(state:CenterState,onEvent:(CenterEvent)->Unit) {
- LocalFrame(state.ui,LocalSection.MATCHES,{onEvent(CenterEvent.Common(it))},showLeague=false,showBack=true,title="Match Center") {
+ LocalFrame(state.ui,LocalSection.MATCHES,{onEvent(CenterEvent.Common(it))},showLeague=false,showBack=false,header=false,title="Match Center") {
   val match=state.match
-  if(match==null) item { EmptyLocal("Partido no disponible.") }
+  if(match==null) item { PlayerTopBar("Match Center",onBack={onEvent(CenterEvent.Common(LocalEvent.Back))});EmptyLocal("Partido no disponible.") }
   else {
-   item { MutedText("${state.league} · Jornada ${match.matchday}") }
-   item { HeroCard { MatchScoreboard(match.homeTeam,match.awayTeam,match.homeScore,match.awayScore,match.status,minute=match.minute);MutedText("${match.date} · ${match.time} · ${match.venue}") } }
+   item { MatchCenterHeader(state.league,match.matchday,{onEvent(CenterEvent.Common(LocalEvent.Back))},{onEvent(CenterEvent.Action(MatchAction.SHARE))}) }
+   item { MatchScoreboard(match.homeTeam,match.awayTeam,match.homeScore,match.awayScore,match.status,minute=match.minute) }
    item { MatchCenterTabs(state.tab) { onEvent(CenterEvent.Tab(it)) } }
    state.error?.let { item { Text(it,color=MaterialTheme.colorScheme.error,modifier=Modifier.testTag("center-error")) } }
    state.message?.let { item { Text(it,color=MaterialTheme.colorScheme.primary) } }
@@ -55,7 +56,7 @@ import kotlinx.coroutines.withContext
     }
     MatchCenterTab.LINEUP->{
      item { SectionHeading("Jugadores en cancha",if(state.canManage) "Editar alineación" else null,{onEvent(CenterEvent.EditLineup)}) }
-     item { MutedText("En cancha al minuto ${state.courtMinute}. Desliza para revisar el partido.");Slider(value=state.courtMinute.toFloat(),onValueChange={onEvent(CenterEvent.CourtMinute(it.toInt()))},valueRange=0f..130f,modifier=Modifier.testTag("court-minute")) }
+     item { MutedText(if(state.courtMinute==130) "Última alineación registrada" else "En cancha al minuto ${state.courtMinute}");if(state.sheet.substitutions.isNotEmpty()) Slider(value=state.courtMinute.toFloat(),onValueChange={onEvent(CenterEvent.CourtMinute(it.toInt()))},valueRange=0f..130f,modifier=Modifier.testTag("court-minute")) }
      item { MatchLineupContent(state.lineups,state.selectedTeam) { onEvent(CenterEvent.Team(it)) } }
      if(state.substitutions.isNotEmpty()) item { LeagueHubCard(Modifier.fillMaxWidth()) { Text("Cambios registrados",style=MaterialTheme.typography.titleMedium);state.substitutions.forEach { MutedText(it) } } }
      if(state.canManage) {
@@ -70,7 +71,7 @@ import kotlinx.coroutines.withContext
       } }
       item { LeagueHubCard(Modifier.fillMaxWidth()) {
        Text("Minutos jugados",style=MaterialTheme.typography.titleMedium)
-       MutedText("Calcula las participaciones desde los titulares y cambios de ambos equipos. Actualiza sus minutos guardados y conserva las valoraciones existentes.")
+       MutedText("Reemplaza las participaciones de los equipos alineados según sus titulares y cambios. Conserva las valoraciones de quienes jugaron.")
        OutlinedTextField(state.duration,{onEvent(CenterEvent.Field("duration",it))},label={Text("Duración del partido")},singleLine=true,modifier=Modifier.fillMaxWidth())
        TextButton(onClick={onEvent(CenterEvent.ApplyMinutes)},enabled=!state.busy) { Text("Calcular y guardar minutos") }
       } }
@@ -90,8 +91,10 @@ import kotlinx.coroutines.withContext
   ChoiceField(FormField("formation","Formación",state.formation,listOf("2-2" to "5 jugadores · 2-2","2-3-1" to "7 jugadores · 2-3-1","4-3-3" to "11 jugadores · 4-3-3"))) { onEvent(CenterEvent.Formation(it)) }
   MutedText("Selecciona titulares. Los demás quedarán como suplentes. El orden seleccionado define su ubicación en la cancha.")
   state.players.forEach { p->Row(Modifier.fillMaxWidth().clickable { onEvent(CenterEvent.TogglePlayer(p.id)) },verticalAlignment=Alignment.CenterVertically) { Checkbox(p.id in state.draft,{onEvent(CenterEvent.TogglePlayer(p.id))});Text("#${p.number} ${p.name}",style=MaterialTheme.typography.bodyMedium) } }
+  TextButton(onClick={onEvent(CenterEvent.ResetPrompt(true))},enabled=!state.busy) { Text("Quitar alineación y cambios") }
   state.error?.let { Text(it,color=MaterialTheme.colorScheme.error) }
  }},confirmButton={TextButton(onClick={onEvent(CenterEvent.SaveLineup)},enabled=!state.busy) { Text("Guardar alineación") }},dismissButton={TextButton(onClick={onEvent(CenterEvent.CancelLineup)},enabled=!state.busy) { Text("Cancelar") }})
+ if(state.confirmReset) AlertDialog(onDismissRequest={onEvent(CenterEvent.ResetPrompt(false))},title={Text("Quitar alineación")},text={Text("Se quitarán los titulares y cambios de este equipo. Los eventos y minutos ya publicados se conservan hasta que los edites.")},confirmButton={TextButton(onClick={onEvent(CenterEvent.ResetLineup)},enabled=!state.busy) { Text("Confirmar quitar") }},dismissButton={TextButton(onClick={onEvent(CenterEvent.ResetPrompt(false))}) { Text("Cancelar") }})
 }
 
 @Composable private fun MatchPhoto(uri:String) {
