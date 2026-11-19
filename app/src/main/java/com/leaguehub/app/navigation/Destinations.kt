@@ -121,3 +121,5 @@ data object LocalHubDestination
 @Serializable data object LocalStandingsDestination
 @Serializable data object LocalProfileDestination
 @Serializable data object LocalBackupDestination
+
+@Serializable data object CloudSyncDestination

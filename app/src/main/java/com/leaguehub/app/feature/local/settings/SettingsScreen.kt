@@ -17,6 +17,7 @@ import com.leaguehub.app.R
   item { LeagueHubCard(Modifier.fillMaxWidth()) {
    SettingsRow("Editar mi nombre",R.drawable.lh_user) { onEvent(SettingsEvent.EditName) }
    SettingsRow("Cambiar contraseña",R.drawable.lh_shield) { onEvent(SettingsEvent.Password) }
+   SettingsRow("Sincronización Firebase",R.drawable.lh_radio) { onEvent(SettingsEvent.Common(LocalEvent.OpenPage(LocalPage.CLOUD))) }
    SettingsRow("Notificaciones",R.drawable.lh_bell) { onEvent(SettingsEvent.Common(LocalEvent.OpenPage(LocalPage.ALERTS))) }
    SettingsRow("Apariencia: ${state.ui.appearance}",R.drawable.lh_spark) { onEvent(SettingsEvent.Common(LocalEvent.ChangeAppearance)) }
    SettingsRow("Privacidad y datos",R.drawable.lh_info) { onEvent(SettingsEvent.Privacy(true)) }
@@ -30,7 +31,7 @@ import com.leaguehub.app.R
   } }
   item { OutlinedButton(onClick={onEvent(SettingsEvent.Common(LocalEvent.RequestLogout))},modifier=Modifier.fillMaxWidth()) { Text("Cerrar sesión",color=MaterialTheme.colorScheme.error) } }
  }
- if(state.privacy) AlertDialog(onDismissRequest={onEvent(SettingsEvent.Privacy(false))},title={Text("Privacidad y datos")},text={Text("Tus cuentas y datos deportivos se guardan en Room/SQLite en este teléfono. Las fotos elegidas usan accesos del selector de Android. Los respaldos no incluyen cuentas, contraseñas ni fotos. El anuncio remoto es una demostración de JSONPlaceholder; los datos deportivos no se envían a ese servicio.")},confirmButton={TextButton(onClick={onEvent(SettingsEvent.Privacy(false))}) { Text("Entendido") }})
+ if(state.privacy) AlertDialog(onDismissRequest={onEvent(SettingsEvent.Privacy(false))},title={Text("Privacidad y datos")},text={Text("Tus datos se guardan en Room/SQLite. Si conectas Firebase, la autenticación y las ligas se sincronizan con el proyecto configurado. Las ligas sincronizadas son visibles para usuarios registrados; solo su dueño puede editarlas. Las fotos se conservan en este teléfono. Las fotos elegidas usan accesos del selector de Android. Los respaldos no incluyen cuentas, contraseñas ni fotos. El anuncio remoto es una demostración de JSONPlaceholder; los datos deportivos no se envían a ese servicio.")},confirmButton={TextButton(onClick={onEvent(SettingsEvent.Privacy(false))}) { Text("Entendido") }})
 }
 @Composable private fun SettingsRow(label:String,icon:Int,onClick:()->Unit) {
  TextButton(onClick=onClick,modifier=Modifier.fillMaxWidth().heightIn(min=52.dp)) {

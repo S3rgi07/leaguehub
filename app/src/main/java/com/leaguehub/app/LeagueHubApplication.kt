@@ -11,8 +11,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
-class LeagueHubApplication : Application() {
+open class LeagueHubApplication : Application() {
 
+    protected open val firebaseEnabled:Boolean get()=BuildConfig.FIREBASE_CONFIGURED
+    val firebaseGateway by lazy {
+        if(firebaseEnabled) com.google.firebase.FirebaseApp.initializeApp(this)?.let { app ->
+            com.leaguehub.app.data.cloud.FirebaseGateway(com.google.firebase.auth.FirebaseAuth.getInstance(app),com.google.firebase.firestore.FirebaseFirestore.getInstance(app))
+        } else null
+    }
+    val cloudSync by lazy { com.leaguehub.app.data.cloud.CloudSyncEngine(database,userSessionRepository,firebaseGateway,firebaseGateway,applicationScope) }
+    override fun onCreate() { super.onCreate();cloudSync.start() }
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val database: LeagueHubDatabase by lazy {
@@ -20,7 +28,7 @@ class LeagueHubApplication : Application() {
     }
 
     val userSessionRepository: UserSessionRepository by lazy {
-        UserSessionRepository(database.userSessionDao(), applicationScope, database.userAccountDao(), { storageErrors.tryEmit(it) })
+        UserSessionRepository(database.userSessionDao(), applicationScope, database.userAccountDao(), { storageErrors.tryEmit(it) }, { firebaseGateway?.signOut() })
     }
 
     val storageErrors = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 8)
@@ -35,7 +43,7 @@ class LeagueHubApplication : Application() {
     val notificationsState by lazy { userState("notifications", { com.leaguehub.app.feature.notifications.NotificationsState() },
         { gson.toJson(it) }, { gson.fromJson(it, com.leaguehub.app.feature.notifications.NotificationsState::class.java) }) }
 
-    val authRepository by lazy { com.leaguehub.app.data.repository.AuthRepository(database, userSessionRepository) }
+    val authRepository by lazy { com.leaguehub.app.data.repository.AuthRepository(database, userSessionRepository,firebaseGateway) }
 
     val competitionRepository by lazy { com.leaguehub.app.data.repository.CompetitionRepository(database) }
 

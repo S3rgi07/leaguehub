@@ -8,17 +8,32 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [UserSessionEntity::class, UserAccountEntity::class, UserDataEntity::class, LeagueEntity::class, ClubEntity::class, PlayerEntity::class, FixtureEntity::class, MatchEventEntity::class],
-    version = 4,
+    entities = [UserSessionEntity::class, UserAccountEntity::class, UserDataEntity::class, LeagueEntity::class, ClubEntity::class, PlayerEntity::class, FixtureEntity::class, MatchEventEntity::class, CloudBindingEntity::class, SyncLeagueEntity::class, SyncControlEntity::class, SyncRecoveryEntity::class],
+    version = 5,
     exportSchema = true
 )
 abstract class LeagueHubDatabase : RoomDatabase() {
     abstract fun userSessionDao(): UserSessionDao
     abstract fun userAccountDao(): UserAccountDao
     abstract fun userDataDao(): UserDataDao
+    abstract fun syncDao():SyncDao
     abstract fun competitionDao(): CompetitionDao
 
     companion object {
+        val SYNC_CALLBACK=object:Callback() {
+            override fun onOpen(db:SupportSQLiteDatabase) { SyncSchema.install(db) }
+        }
+        val MIGRATION_4_5=object:Migration(4,5) {
+            override fun migrate(db:SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS cloud_bindings(userId TEXT NOT NULL PRIMARY KEY, uid TEXT NOT NULL, canonicalId TEXT NOT NULL)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_cloud_bindings_uid ON cloud_bindings(uid)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS sync_leagues(leagueId TEXT NOT NULL PRIMARY KEY,ownerLocalId TEXT NOT NULL,revision INTEGER NOT NULL DEFAULT 0,localVersion INTEGER NOT NULL DEFAULT 0,syncedVersion INTEGER NOT NULL DEFAULT 0,deleted INTEGER NOT NULL DEFAULT 0,basePayload TEXT,ownerUid TEXT,conflictPayload TEXT,conflictRevision INTEGER NOT NULL DEFAULT 0,lastError TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS sync_control(id INTEGER NOT NULL PRIMARY KEY,suppressed INTEGER NOT NULL DEFAULT 0)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS sync_recovery(id TEXT NOT NULL PRIMARY KEY,leagueId TEXT NOT NULL,userId TEXT NOT NULL,payload TEXT NOT NULL,savedAt INTEGER NOT NULL)")
+                SyncSchema.install(db)
+            }
+        }
+
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS user_accounts (userId TEXT NOT NULL, name TEXT NOT NULL, email TEXT NOT NULL, passwordHash TEXT NOT NULL, passwordSalt TEXT NOT NULL, role TEXT, selectedLeagueId TEXT, onboardingCompleted INTEGER NOT NULL, PRIMARY KEY(userId))")
@@ -55,7 +70,7 @@ abstract class LeagueHubDatabase : RoomDatabase() {
                     context.applicationContext,
                     LeagueHubDatabase::class.java,
                     "leaguehub.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).addCallback(SYNC_CALLBACK).build().also { instance = it }
             }
     }
 }

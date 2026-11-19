@@ -43,7 +43,7 @@ import com.leaguehub.app.navigation.*
  val importer=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { latestFileResult(false,it) }
  LaunchedEffect(vm,nav,lifecycle) { lifecycle.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
   vm.effects.collect { effect -> when(effect) {
-   is LocalEffect.Page -> nav.navigate(when(effect.page) { LocalPage.SETTINGS->SettingsDestination;LocalPage.ALERTS->NotificationsDestination;LocalPage.EXPLORE->ExploreDestination;LocalPage.DASHBOARD->OrganizerDashboardDestination }) { launchSingleTop=true }
+   is LocalEffect.Page -> nav.navigate(when(effect.page) { LocalPage.CLOUD->CloudSyncDestination;LocalPage.SETTINGS->SettingsDestination;LocalPage.ALERTS->NotificationsDestination;LocalPage.EXPLORE->ExploreDestination;LocalPage.DASHBOARD->OrganizerDashboardDestination }) { launchSingleTop=true }
    is LocalEffect.League -> nav.navigate(LeagueDetailDestination(effect.id)) { launchSingleTop=true }
    is LocalEffect.Team -> nav.navigate(TeamDetailDestination(effect.id)) { launchSingleTop=true }
    is LocalEffect.Center -> nav.navigate(MatchCenterDestination(effect.id)) { launchSingleTop=true }

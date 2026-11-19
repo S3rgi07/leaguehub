@@ -9,6 +9,11 @@ import androidx.compose.ui.unit.dp
 @Composable fun RecoveryScreen(state:RecoveryState,onEvent:(RecoveryEvent)->Unit) {
  Column(Modifier.fillMaxSize().padding(WindowInsets.safeDrawing.asPaddingValues()).verticalScroll(rememberScrollState()).padding(24.dp),verticalArrangement=Arrangement.spacedBy(20.dp)) {
   Text(state.title,style=MaterialTheme.typography.headlineMedium);Text(state.description);Text(state.instructions)
-  Button(onClick={onEvent(RecoveryEvent.BackClicked)}) { Text("Volver al acceso") }
+  if(state.enabled) {
+   OutlinedTextField(state.email,{onEvent(RecoveryEvent.EmailChanged(it))},label={Text("Correo electrónico")},singleLine=true,enabled=!state.loading,modifier=Modifier.fillMaxWidth())
+   Button(onClick={onEvent(RecoveryEvent.SendClicked)},enabled=!state.loading) { Text(if(state.loading) "Solicitando enlace…" else "Enviar enlace de recuperación") }
+  } else Text("Firebase no está configurado en esta compilación. Puedes cambiar tu contraseña desde una sesión local abierta usando la contraseña actual.",color=MaterialTheme.colorScheme.onSurfaceVariant)
+  state.message?.let { Text(it,color=MaterialTheme.colorScheme.primary) };state.error?.let { Text(it,color=MaterialTheme.colorScheme.error) }
+  TextButton(onClick={onEvent(RecoveryEvent.BackClicked)}) { Text("Volver al acceso") }
  }
 }

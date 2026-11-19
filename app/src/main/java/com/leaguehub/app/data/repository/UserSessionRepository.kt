@@ -19,7 +19,8 @@ class UserSessionRepository(
     private val sessionDao: UserSessionDao,
     applicationScope: CoroutineScope,
     private val accountDao: UserAccountDao? = null,
-    private val onStorageError: (String) -> Unit = {}
+    private val onStorageError: (String) -> Unit = {},
+    private val onLoggedOut: () -> Unit = {}
 ) {
     private val _session = MutableStateFlow(UserSession())
     val session = _session.asStateFlow()
@@ -76,6 +77,7 @@ class UserSessionRepository(
     }
     fun logout() {
         val previous = _session.value
+        onLoggedOut()
         _session.value = UserSession()
         operations.trySend(Operation({
             persistAccountPreferences(UserSessionEntity.fromDomain(previous))
@@ -84,6 +86,7 @@ class UserSessionRepository(
     }
     suspend fun logoutAndWait() = submit {
         persistAccountPreferences(UserSessionEntity.fromDomain(_session.value))
+        onLoggedOut()
         sessionDao.clear()
         _session.value = UserSession()
     }
