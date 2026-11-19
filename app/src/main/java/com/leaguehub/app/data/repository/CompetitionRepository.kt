@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.first
 /** All edits check ownership and relationships inside the same transaction. */
 class CompetitionRepository(private val database: LeagueHubDatabase) {
     private val dao get() = database.competitionDao()
-    val snapshot = combine(dao.allLeagues(), dao.allClubs(), dao.allPlayers(), dao.allFixtures(), dao.allEvents(), ::CompetitionSnapshot)
+    val snapshot = combine(dao.allLeagues(), dao.allClubs(), dao.allPlayers(), dao.allFixtures(), dao.allEvents()) { leagues,clubs,players,fixtures,events -> CompetitionSnapshot(leagues,clubs,players,fixtures,events) }.combine(database.userDataDao().allMatchSheets()) { snapshot,rows ->
+        snapshot.copy(sheets=rows.mapNotNull { row -> val id=row.dataKey.removePrefix("match-sheet:");val fixture=snapshot.fixtures.find { it.id==id };if(fixture!=null && snapshot.leagues.any { it.id==fixture.leagueId && it.ownerId==row.userId }) runCatching { id to MatchSheetRepository.decode(row.payload) }.getOrNull() else null }.toMap())
+    }
     private suspend fun requireOwner(leagueId: String, ownerId: String) {
         require(ownerId.isNotBlank() && dao.league(leagueId)?.ownerId == ownerId) { "No puedes modificar esta liga" }
     }
@@ -35,7 +37,7 @@ class CompetitionRepository(private val database: LeagueHubDatabase) {
         require(player.number in 1..99) { "El dorsal debe estar entre 1 y 99" }
         require(dao.dorsalCount(player.clubId, player.number, player.id) == 0) { "El dorsal ya está ocupado en este equipo" }
         dao.player(player.id)?.let { old ->
-            require(old.clubId == player.clubId || dao.playerEventCount(player.id) == 0) { "No puedes trasladar un jugador con historial de partidos" }
+            require(old.clubId == player.clubId || (dao.playerEventCount(player.id) == 0 && !hasSheetReference(player.id))) { "No puedes trasladar un jugador con historial de partidos" }
         }
         player.accountId?.let { id ->
             require(database.userAccountDao().findById(id) != null) { "La cuenta vinculada no existe" }
@@ -84,12 +86,16 @@ class CompetitionRepository(private val database: LeagueHubDatabase) {
         dao.save(event)
     }
 
+    private suspend fun hasSheetReference(playerId:String):Boolean = database.userDataDao().allMatchSheets().first().any { row ->
+        val sheet=MatchSheetRepository.decode(row.payload)
+        sheet.teams.any { playerId in it.starters } || sheet.substitutions.any { it.inId==playerId || it.outId==playerId }
+    }
     suspend fun delete(ownerId: String, kind: String, id: String) = database.withTransaction {
         when (kind) {
             "league" -> { val item = requireNotNull(dao.league(id)); requireOwner(id, ownerId); dao.delete(item) }
             "club" -> { val item = requireNotNull(dao.club(id)); requireOwner(item.leagueId, ownerId); dao.delete(item) }
-            "player" -> { val item = requireNotNull(dao.player(id)); requireOwner(requireNotNull(dao.club(item.clubId)).leagueId, ownerId); dao.delete(item) }
-            "fixture" -> { val item = requireNotNull(dao.fixture(id)); requireOwner(item.leagueId, ownerId); dao.delete(item) }
+            "player" -> { require(!hasSheetReference(id)) { "Quita al jugador de las alineaciones y cambios antes de eliminarlo" }; val item = requireNotNull(dao.player(id)); requireOwner(requireNotNull(dao.club(item.clubId)).leagueId, ownerId); dao.delete(item) }
+            "fixture" -> { val item = requireNotNull(dao.fixture(id)); requireOwner(item.leagueId, ownerId); dao.delete(item);database.userDataDao().delete(ownerId,MatchSheetRepository.key(id)) }
             "event" -> { val item = requireNotNull(dao.event(id)); requireOwner(requireNotNull(dao.fixture(item.fixtureId)).leagueId, ownerId); dao.delete(item) }
             else -> error("Registro inválido")
         }

@@ -16,6 +16,6 @@ fun testCommunity()=CommunityRepository(object:LeagueHubApi { override suspend f
  val context=LocalContext.current
  val nav=rememberNavController()
  androidx.compose.runtime.SideEffect { onNavReady(nav) }
- val deps=LocalDependencies(sessions,community,BackupRepository(database),context.contentResolver) { store }
+ val deps=LocalDependencies(sessions,community,BackupRepository(database),context.contentResolver,MatchSheetRepository(database),database.userDataDao()) { store }
  LeagueHubTheme { NavHost(navController=nav,startDestination=LocalHubDestination) { localNavigation(nav,deps) } }
 }

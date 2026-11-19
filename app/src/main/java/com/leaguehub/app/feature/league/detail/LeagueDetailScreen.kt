@@ -34,7 +34,8 @@ fun LeagueDetailScreen(
     onBack: () -> Unit,
     onNotificationsClick: () -> Unit,
     onNavigate: (PlayerDestination) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    newsLabel:String="Noticias"
 ) {
     PlayerScaffold(PlayerDestination.HOME, onNavigate, modifier) {
         item { PlayerTopBar("", onBack = onBack) { LeagueIconButton(R.drawable.lh_bell, "Alertas de la liga", onNotificationsClick) } }
@@ -67,7 +68,7 @@ fun LeagueDetailScreen(
                 StatCard(league.matchCount.toString(), "Partidos", R.drawable.lh_calendar, Modifier.weight(1f), MaterialTheme.colorScheme.tertiary)
             }
         }
-        item { ChoiceTabs(LeagueTab.entries.map { it.label }, selectedTab.ordinal) { onTabChange(LeagueTab.entries[it]) } }
+        item { ChoiceTabs(LeagueTab.entries.map { if(it==LeagueTab.NEWS) newsLabel else it.label }, selectedTab.ordinal) { onTabChange(LeagueTab.entries[it]) } }
         if (selectedTab == LeagueTab.OVERVIEW) {
             item { SectionHeading("Equipos destacados", "Ver ${teams.size}", { onTabChange(LeagueTab.TEAMS) }) }
             item {
@@ -96,8 +97,8 @@ fun LeagueDetailScreen(
                 }
             }
         } else {
-            item { SectionHeading(if (selectedTab == LeagueTab.NEWS) "Noticias" else "Última noticia") }
-            if (news.isEmpty()) item { EmptyContent("No hay noticias publicadas.") }
+            item { SectionHeading(if (selectedTab == LeagueTab.NEWS) newsLabel else "Última actualización") }
+            if (news.isEmpty()) item { EmptyContent("No hay actualizaciones publicadas.") }
             items(if (selectedTab == LeagueTab.OVERVIEW) news.take(1) else news, key = { it.id }) { article ->
                 LeagueHubCard(Modifier.fillMaxWidth().clickable(role = Role.Button) { onNewsClick(article) }) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {

@@ -22,6 +22,7 @@ fun LeaguesScreen(state:LeaguesState,onEvent:(LeaguesEvent)->Unit) {
  items(state.leagues,key={it.id}) { row -> HeroCard {
   Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) { LeagueIcon(R.drawable.lh_league,null,Modifier.size(64.dp),MaterialTheme.colorScheme.primary);Column { Text(row.name,style=MaterialTheme.typography.headlineSmall);MutedText("TEMPORADA · ${row.season}") } }
   if(row.selected) LeagueBadge("LIGA SELECCIONADA",icon=R.drawable.lh_check)
+  OutlinedButton(onClick={onEvent(LeaguesEvent.Details(row.id))}) { Text("Detalle de liga") }
   TextButton(onClick={onEvent(LeaguesEvent.Open(row.id))}) { Text("Abrir ${row.name}") }
   if(row.canEdit) Row { TextButton(onClick={onEvent(LeaguesEvent.Edit(row.id))}) { Text("Editar liga") };TextButton(onClick={onEvent(LeaguesEvent.Delete(row.id))}) { Text("Eliminar liga") } }
  } }

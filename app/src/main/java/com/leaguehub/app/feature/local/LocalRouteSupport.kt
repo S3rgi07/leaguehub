@@ -33,14 +33,22 @@ import com.leaguehub.app.navigation.*
  if(!restored || !session.isAuthenticated) { Box(Modifier.fillMaxSize(),contentAlignment=androidx.compose.ui.Alignment.Center) { CircularProgressIndicator() };return false }
  return true
 }
-@Composable fun LocalEffects(vm:LocalFeatureViewModel,nav:NavHostController,onFileResult:(Boolean,Uri?)->Unit={_,_->}) {
+@Composable fun LocalEffects(vm:LocalFeatureViewModel,nav:NavHostController,onImageResult:(Uri?)->Unit={},onFileResult:(Boolean,Uri?)->Unit={_,_->}) {
  val context=LocalContext.current
  val lifecycle=LocalLifecycleOwner.current
+ val latestImageResult by rememberUpdatedState(onImageResult)
+ val imagePicker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { latestImageResult(it) }
  val latestFileResult by rememberUpdatedState(onFileResult)
  val exporter=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { latestFileResult(true,it) }
  val importer=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { latestFileResult(false,it) }
  LaunchedEffect(vm,nav,lifecycle) { lifecycle.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
   vm.effects.collect { effect -> when(effect) {
+   is LocalEffect.Page -> nav.navigate(when(effect.page) { LocalPage.SETTINGS->SettingsDestination;LocalPage.ALERTS->NotificationsDestination;LocalPage.EXPLORE->ExploreDestination;LocalPage.DASHBOARD->OrganizerDashboardDestination }) { launchSingleTop=true }
+   is LocalEffect.League -> nav.navigate(LeagueDetailDestination(effect.id)) { launchSingleTop=true }
+   is LocalEffect.Team -> nav.navigate(TeamDetailDestination(effect.id)) { launchSingleTop=true }
+   is LocalEffect.Center -> nav.navigate(MatchCenterDestination(effect.id)) { launchSingleTop=true }
+   is LocalEffect.Details -> nav.navigate(MatchDetailDestination(effect.id)) { launchSingleTop=true }
+   LocalEffect.ImageFile -> imagePicker.launch(arrayOf("image/*"))
    is LocalEffect.Section -> {
     val target:Any=when(effect.section) {
      LocalSection.HOME->LocalHomeDestination

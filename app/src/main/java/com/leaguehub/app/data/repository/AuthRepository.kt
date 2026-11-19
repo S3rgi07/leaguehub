@@ -53,6 +53,7 @@ class AuthRepository(private val database: LeagueHubDatabase, private val sessio
             require(account != null && PasswordHasher.matches(password, account.passwordSalt, account.passwordHash)) {
                 "Correo o contraseña incorrectos"
             }
+            if(account.userId==DemoAccount.USER_ID) DemoAccount.ensureSheets(database)
             account.toSession()
         }
         sessionRepository.session.value

@@ -26,7 +26,7 @@ fun LocalProfileScreen(state:LocalProfileState,onEvent:(LocalProfileEvent)->Unit
     MutedText(state.player?.let { "${it.team} · ${it.position}" } ?: "Sin equipo asignado")
     state.player?.let { Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) { LeagueBadge("#${it.number}",color=MaterialTheme.colorScheme.secondary);LeagueBadge("PLANTILLA") } }
    }
-   LeagueIconButton(R.drawable.lh_settings,"Editar mi nombre",{onEvent(LocalProfileEvent.EditName)},Modifier.align(Alignment.TopEnd))
+   LeagueIconButton(R.drawable.lh_settings,"Configuración",{onEvent(LocalProfileEvent.Common(LocalEvent.OpenPage(LocalPage.SETTINGS)))},Modifier.align(Alignment.TopEnd))
   }
  }
  item { Row(horizontalArrangement=Arrangement.spacedBy(10.dp)) {

@@ -1,6 +1,7 @@
 package com.leaguehub.app.data.repository
 
 import androidx.room.withTransaction
+import kotlinx.coroutines.flow.first
 import com.leaguehub.app.data.local.*
 import java.time.LocalDate
 
@@ -75,4 +76,27 @@ object DemoAccount {
             database.userDataDao().upsert(UserDataEntity(USER_ID, "followed_teams", "[\"${clubs[0].id}\",\"${clubs[1].id}\"]"))
         }
     }
+    /** One-time upgrade for an existing demo account; never reapplies a user-edited acta. */
+    suspend fun ensureSheets(database:LeagueHubDatabase) {
+        database.withTransaction {
+            val dao=database.userDataDao()
+            if(dao.read(USER_ID,"demo-sheets-v1")!=null || database.userAccountDao().findByEmail(EMAIL)?.userId!=USER_ID) return@withTransaction
+            val players=database.competitionDao().allPlayers().first()
+            val fixtures=database.competitionDao().allFixtures().first().filter { it.leagueId==LEAGUE_ID }
+            val repository=MatchSheetRepository(database)
+            fixtures.forEach { fixture ->
+                if(dao.read(USER_ID,MatchSheetRepository.key(fixture.id))==null) {
+                    val teams=listOf(fixture.homeId,fixture.awayId).mapNotNull { club ->
+                        val roster=players.filter { it.clubId==club }.sortedBy { it.id }
+                        val keeper=roster.find { it.position.contains("porter",true) }
+                        val starters=listOfNotNull(keeper)+roster.filter { it.id!=keeper?.id }.take(4)
+                        if(starters.size==5) TeamSheet(club,"2-2",starters.map { it.id }) else null
+                    }
+                    repository.update(USER_ID,fixture.id) { it.copy(teams=teams) }
+                }
+            }
+            dao.upsert(UserDataEntity(USER_ID,"demo-sheets-v1","true"))
+        }
+    }
+
 }

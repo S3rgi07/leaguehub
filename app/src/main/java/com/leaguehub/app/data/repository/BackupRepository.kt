@@ -18,8 +18,9 @@ import java.util.UUID
 @Serializable data class BackupPlayer(val id: String, val clubId: String, val name: String, val number: Int, val position: String)
 @Serializable data class BackupFixture(val id: String, val leagueId: String, val homeId: String, val awayId: String, val kickoff: String, val venue: String, val matchday: Int, val homeScore: Int?, val awayScore: Int?)
 @Serializable data class BackupEvent(val id: String, val fixtureId: String, val playerId: String, val kind: String, val minute: Int, val minutesPlayed: Int, val rating: Double?)
+@Serializable data class BackupSheet(val fixtureId:String,val sheet:MatchSheet)
 @Serializable data class BackupDocument(val format: String, val version: Int, val exportedAt: String,
-    val leagues: List<BackupLeague>, val clubs: List<BackupClub>, val players: List<BackupPlayer>, val fixtures: List<BackupFixture>, val events: List<BackupEvent>)
+    val leagues: List<BackupLeague>, val clubs: List<BackupClub>, val players: List<BackupPlayer>, val fixtures: List<BackupFixture>, val events: List<BackupEvent>, val sheets:List<BackupSheet> = emptyList())
 
 /** Sports data only. Account ownership and player-account links never cross the backup boundary. */
 class BackupRepository(private val database: LeagueHubDatabase) {
@@ -40,7 +41,8 @@ class BackupRepository(private val database: LeagueHubDatabase) {
                 leagues.map { BackupLeague(it.id,it.name,it.season) },clubs.map { BackupClub(it.id,it.leagueId,it.name) },
                 players.map { BackupPlayer(it.id,it.clubId,it.name,it.number,it.position) },
                 fixtures.map { BackupFixture(it.id,it.leagueId,it.homeId,it.awayId,it.kickoff,it.venue,it.matchday,it.homeScore,it.awayScore) },
-                dao.allEvents().first().filter { it.fixtureId in fixtureIds }.map { BackupEvent(it.id,it.fixtureId,it.playerId,it.kind,it.minute,it.minutesPlayed,it.rating) })
+                dao.allEvents().first().filter { it.fixtureId in fixtureIds }.map { BackupEvent(it.id,it.fixtureId,it.playerId,it.kind,it.minute,it.minutesPlayed,it.rating) },
+                fixtures.mapNotNull { f->database.userDataDao().read(ownerId,MatchSheetRepository.key(f.id))?.let { BackupSheet(f.id,MatchSheetRepository.decode(it).copy(photos=emptyList())) } })
         }
         validate(document)
         json.encodeToString(document).also { require(it.toByteArray(Charsets.UTF_8).size<=MAX_BYTES) { "El respaldo supera el límite de 8 MB" } }
@@ -93,6 +95,12 @@ class BackupRepository(private val database: LeagueHubDatabase) {
             require(e.rating==null || (e.rating.isFinite() && e.rating in 0.0..10.0)) { "Valoración inválida" }
             require(e.kind=="APPEARANCE" || (e.minutesPlayed==0 && e.rating==null)) { "Participación inválida" }
         }
+        ids(d.sheets.map { it.fixtureId })
+        d.sheets.forEach { entry ->
+            val f=requireNotNull(fixtures[entry.fixtureId]) { "Alineación sin partido" }
+            require(entry.sheet.photos.isEmpty()) { "Los respaldos no incluyen accesos a fotos del dispositivo" }
+            MatchSheetRepository.validate(entry.sheet,FixtureEntity(f.id,f.leagueId,f.homeId,f.awayId,f.kickoff,f.venue,f.matchday,f.homeScore,f.awayScore),d.players.map { PlayerEntity(it.id,it.clubId,it.name,it.number,it.position) })
+        }
         val appearances=d.events.filter { it.kind=="APPEARANCE" }
         require(appearances.map { it.fixtureId to it.playerId }.distinct().size==appearances.size) { "Hay participaciones duplicadas" }
         val goals=d.events.filter { it.kind=="GOAL" }.groupingBy { it.fixtureId to players.getValue(it.playerId).clubId }.eachCount()
@@ -110,6 +118,10 @@ class BackupRepository(private val database: LeagueHubDatabase) {
             document.players.forEach { dao.save(PlayerEntity(players.getValue(it.id),clubs.getValue(it.clubId),it.name,it.number,it.position,accountId=null)) }
             document.fixtures.forEach { dao.save(FixtureEntity(fixtures.getValue(it.id),leagues.getValue(it.leagueId),clubs.getValue(it.homeId),clubs.getValue(it.awayId),it.kickoff,it.venue,it.matchday,it.homeScore,it.awayScore)) }
             document.events.forEach { dao.save(MatchEventEntity(UUID.randomUUID().toString(),fixtures.getValue(it.fixtureId),players.getValue(it.playerId),it.kind,it.minute,it.minutesPlayed,it.rating)) }
+            document.sheets.forEach { entry ->
+                val mapped=entry.sheet.copy(teams=entry.sheet.teams.map { team->team.copy(clubId=clubs.getValue(team.clubId),starters=team.starters.map { players.getValue(it) }) },substitutions=entry.sheet.substitutions.map { sub->sub.copy(clubId=clubs.getValue(sub.clubId),outId=players.getValue(sub.outId),inId=players.getValue(sub.inId)) })
+                database.userDataDao().upsert(UserDataEntity(ownerId,MatchSheetRepository.key(fixtures.getValue(entry.fixtureId)),MatchSheetRepository.json.encodeToString(mapped)))
+            }
             document.leagues.size
         }
     }
