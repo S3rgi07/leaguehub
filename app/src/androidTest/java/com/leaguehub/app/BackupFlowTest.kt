@@ -12,6 +12,8 @@ import com.leaguehub.app.data.local.*
 import com.leaguehub.app.data.repository.*
 import com.leaguehub.app.data.session.SessionRole
 import com.leaguehub.app.feature.local.*
+import com.leaguehub.app.feature.local.backup.*
+import com.leaguehub.app.feature.local.backup.BackupEvent
 import com.leaguehub.app.ui.theme.LeagueHubTheme
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
@@ -39,17 +41,17 @@ class BackupFlowTest {
             }
             sessions.selectRole(SessionRole.ORGANIZER)
             val local=LocalHubViewModel(repo,sessions,auth,db.userAccountDao())
-            val backup=BackupViewModel(BackupRepository(db),sessions,context.contentResolver)
+            val backup=BackupViewModel(BackupRepository(db),sessions,context.contentResolver,local)
             compose.setContent {
-                val state by local.state.collectAsStateWithLifecycle()
                 val data by backup.state.collectAsStateWithLifecycle()
-                LeagueHubTheme {
-                    LocalHubScreen(state,local,backupBusy=data.busy,onExport={backup.export(Uri.fromFile(file))},onImport={backup.inspect(Uri.fromFile(file))})
-                    BackupDialogs(data,backup::confirm,backup::dismiss)
-                }
+                androidx.compose.runtime.LaunchedEffect(backup) { backup.effects.collect { effect -> when(effect) {
+                    is LocalEffect.ExportFile -> backup.onEvent(BackupEvent.ExportSelected(Uri.fromFile(file)))
+                    LocalEffect.ImportFile -> backup.onEvent(BackupEvent.ImportSelected(Uri.fromFile(file)))
+                    else -> Unit
+                } } }
+                LeagueHubTheme { BackupScreen(data,backup::onEvent) }
             }
             compose.waitUntil(10_000) { !local.state.value.loading }
-            compose.onNodeWithTag("tab-PROFILE").performClick()
             click("Exportar respaldo")
             compose.waitUntil(10_000) { !backup.state.value.busy && backup.state.value.message!=null }
             assertTrue(file.exists());assertFalse(file.readText().contains("Prueba123"))
@@ -65,7 +67,7 @@ class BackupFlowTest {
             compose.waitUntil(10_000) { local.state.value.data.leagues.size==2 && !backup.state.value.busy }
             compose.onNodeWithText("Aceptar").performClick()
             val before=backup.state.value
-            backup.export(null);backup.inspect(null)
+            backup.onEvent(BackupEvent.ExportSelected(null));backup.onEvent(BackupEvent.ImportSelected(null))
             assertEquals(before,backup.state.value)
             file.writeText("{archivo inválido")
             click("Importar respaldo")

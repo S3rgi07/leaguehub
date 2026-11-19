@@ -22,6 +22,10 @@ class LoginViewModel(
 
     fun onEvent(event: LoginEvent) {
         when (event) {
+            LoginEvent.ForgotPasswordClicked -> _state.update { it.copy(navigationAction=LoginAction.RECOVERY) }
+            LoginEvent.CreateAccountClicked -> _state.update { it.copy(navigationAction=LoginAction.REGISTER) }
+            LoginEvent.NavigationHandled -> _state.update { it.copy(navigationAction=LoginAction.NONE) }
+
 
             is LoginEvent.EmailChanged -> {
                 _state.update {
@@ -94,18 +98,20 @@ class LoginViewModel(
             }
 
             val result = try {
-                authRepository.login(currentState.email, currentState.password)
-                Result.success(Unit)
+                val session = authRepository.login(currentState.email, currentState.password)
+                Result.success(if(session.role==null) LoginTarget.ROLE else LoginTarget.LOCAL)
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
-                Result.failure<Unit>(error)
+                Result.failure<LoginTarget>(error)
             }
             val success = result.isSuccess
             _state.update {
                 it.copy(
                     isLoading = false,
                     isLoginSuccessful = success,
+                    target = result.getOrNull(),
+                    password = if(success) "" else it.password,
                     errorMessage = if (success) {
                         null
                     } else {

@@ -1,8 +1,9 @@
 # LeagueHub
 
 Aplicación Android local en Jetpack Compose para administrar ligas, equipos, jugadores,
-partidos, resultados y estadísticas. El flujo principal usa datos de Room/SQLite; no requiere
-servidor, conexión a Internet ni una cuenta externa.
+partidos, resultados y estadísticas. La gestión deportiva usa datos de Room/SQLite y funciona sin conexión ni servidor propio.
+Inicio también consulta un anuncio remoto de demostración cuando hay Internet; un error de red
+no bloquea las funciones locales.
 
 ## Ejecutar
 
@@ -18,6 +19,60 @@ servidor, conexión a Internet ni una cuenta externa.
 La última tarea requiere emulador o teléfono conectado. El APK de entrega es
 `APK/LeagueHub-debug.apk`; el APK que genera Gradle está en
 `app/build/outputs/apk/debug/app-debug.apk`.
+
+## Servicios
+
+| Servicio | Función y condiciones |
+|---|---|
+| Base propia Room/SQLite | Guarda cuentas, ligas, plantillas, partidos, resultados, eventos y preferencias en el teléfono. Es la fuente de los datos deportivos, no una API deportiva externa. |
+| Autenticación local propia | Registro y acceso mediante correo como identificador y contraseña con hash/sal. No utiliza Google, Apple ni un proveedor de autenticación en Internet. |
+| [JSONPlaceholder](https://jsonplaceholder.typicode.com/) | API pública de datos ficticios. Inicio ejecuta `GET https://jsonplaceholder.typicode.com/posts/1` mediante Retrofit y muestra su título como anuncio de demostración. La documentación oficial indica que no requiere registro ni API key. No se presenta como una noticia deportiva real. |
+| Selector de documentos de Android | Exporta/importa respaldos JSON mediante Storage Access Framework, sin permisos generales de almacenamiento. |
+| Compartir y mapas de Android | Abre el selector del sistema para compartir y una aplicación de mapas instalada para consultar la cancha. No utiliza el SDK de Google Maps ni consulta la ubicación GPS. |
+
+La llamada obligatoria a Internet está en el recorrido real: **Registro/Login → Inicio →
+Anuncio remoto · demostración**. Se realiza al crear el ViewModel de Inicio y se puede repetir
+con **Actualizar anuncio / Reintentar conexión**. El estado muestra carga, datos o error.
+Para demostrar el manejo sin conexión, abrir Inicio sin Internet: el aviso permite reintentar
+y los formularios, Room, la tabla y los respaldos siguen disponibles. La API externa no guarda
+los datos de la liga; esas operaciones permanecen locales.
+
+## Librerías
+
+- **Jetpack Compose y Material 3:** interfaz declarativa, formularios, listas, diálogos y temas.
+- **Navigation Compose:** grafo de pantallas y navegación type-safe entre destinos `@Serializable`.
+- **Kotlin Serialization:** serialización de destinos y formato JSON versionado de los respaldos.
+- **AndroidX Lifecycle y ViewModel:** estado por pantalla, ciclo de vida y `collectAsStateWithLifecycle`.
+- **Kotlin Coroutines / Flow / StateFlow:** operaciones asíncronas, estado observable y efectos de navegación.
+- **Room / SQLite:** entidades relacionadas, consultas observables, transacciones y migraciones locales.
+- **Retrofit + Gson:** llamada HTTP y conversión del anuncio remoto de JSONPlaceholder.
+- **AndroidX Activity Result:** contratos de selección y creación de archivos de Android.
+- **JUnit, AndroidX Test, Compose UI Test y Espresso:** infraestructura de pruebas unitarias e instrumentadas.
+
+## Navegación y MVI para la rúbrica
+
+Cada funcionalidad activa tiene su carpeta en `feature/local`: `home`, `leagues`, `clubs`,
+`players`, `matches`, `events`, `standings`, `profile` y `backup`. Cada una incluye archivos
+**Screen, ViewModel, State (data class), Event (sealed interface) y Route**.
+Por ejemplo, `leagues/` contiene `LeaguesScreen.kt`, `LeaguesViewModel.kt`, `LeaguesState.kt`,
+`LeaguesEvent.kt` y `LeaguesRoute.kt`. Acceso, registro, recuperación, bienvenida, splash y rol
+conservan igualmente sus archivos MVI dentro de `feature/auth` y `feature/onboarding`.
+
+El flujo es **Screen → Event → ViewModel → StateFlow → Route → Screen**. Los Screen reciben
+únicamente estado y una función de eventos. Los filtros, permisos, cálculos, consultas y guardado
+se procesan fuera de los composables. Solo se usa `remember` para estado visual como desplegables
+y desplazamiento. Los Intents y selectores de archivo se ejecutan en Route a partir de efectos.
+
+`LocalHubViewModel`, `LocalState` y `LocalEvent` forman un coordinador compartido del grafo para
+los comandos comunes de formularios, sesión y persistencia; no sustituyen los ViewModels y estados
+individuales de las pantallas. Cada ViewModel de funcionalidad prepara sus propios modelos de
+presentación y procesa sus eventos. Los datos compartidos permanecen en repositorios y Room.
+
+`LocalNavigation.kt` registra un grafo anidado `LocalHubDestination` con nueve destinos reales:
+Inicio, Ligas, Equipos, Jugadores, Partidos, Eventos, Tabla, Perfil y Respaldos. No se cambia de
+pantalla con un enum guardado en estado ni se navega con rutas string. Los detalles reciben IDs:
+`LocalPlayersDestination(clubId)` y `LocalEventsDestination(matchId)`, que sus ViewModels resuelven
+contra los datos locales. El botón Atrás utiliza el back stack de Navigation Compose.
 
 ## Recorrido funcional local
 
@@ -50,7 +105,7 @@ Eliminar un partido elimina también sus eventos y actualiza las estadísticas.
 
 ## Respaldos locales
 
-En Perfil, en modo Organizador, están **Exportar respaldo** e **Importar respaldo**.
+En **Perfil → Respaldos**, en modo Organizador, están **Exportar respaldo** e **Importar respaldo**.
 El selector de archivos de Android permite elegir el destino o el archivo sin permisos generales
 de almacenamiento.
 
@@ -94,11 +149,11 @@ sesiones de demostración que no tenían cuenta se cierran al arrancar y se soli
 una cuenta local. Los catálogos falsos anteriores nunca fueron ligas guardadas y no se
 convierten en registros reales.
 
-`feature/local` contiene el ViewModel, estado, formularios y pantalla principal.
 `CompetitionRepository` valida propiedad y relaciones dentro de transacciones. Las listas
 observan Room mediante Flow; la tabla y los totales se derivan de los registros actuales.
-La navegación real entra por `LocalHubDestination`. Los antiguos screens y fixtures se
-conservan como referencias de diseño y para pruebas aisladas, fuera del recorrido principal.
+La navegación real entra por el grafo tipado `LocalHubDestination` y las carpetas MVI descritas arriba.
+Los antiguos screens y fixtures se conservan como referencias de diseño y para pruebas aisladas,
+fuera del recorrido principal; el grafo activo no consulta esos catálogos falsos.
 Los documentos `docs/INTEGRANTE-2.md` y `docs/integrante-3.md` describen entregas históricas.
 
 ## Alcance de esta versión
@@ -123,10 +178,17 @@ cada modelo de teléfono: las pruebas instrumentadas se ejecutan en el emulador 
 
 ## Verificación de la entrega local
 
-Compilación y lint completados sin errores. Pasaron 20 pruebas unitarias y 25 pruebas
+La entrega alineada a la rúbrica pasó compilación y lint sin errores, 21 pruebas unitarias y 26 pruebas
 instrumentadas en el emulador disponible, incluyendo registro/login, cambio de contraseña,
 recreación de actividad, captura por formularios, edición/eliminación, protección de dependencias,
 modo de lectura, reapertura de datos y migraciones. El APK de `APK/LeagueHub-debug.apk` se
 actualizó desde la compilación comprobada y se verificó su coincidencia por SHA-256.
 
 La cobertura de respaldos comprueba exportación sin credenciales, copia independiente al importar varias veces, JSON y referencias inválidos, límites de archivo, reversión de una escritura fallida y el flujo de vista previa/cancelación desde Perfil.
+
+La refactorización para la rúbrica incorpora pruebas sobre el grafo real: apertura de detalles
+por ID, regreso entre pantallas, navegación a Respaldos y error/reintento de la consulta remota
+sin impedir la gestión local. Las pruebas de red automatizadas inyectan un servicio controlado;
+la aplicación normal usa el endpoint público real indicado en Servicios.
+
+La validación final del grafo tipado comprueba detalles por ID, regreso entre pantallas y acceso a Respaldos. El escenario de Internet simula primero un fallo y después una respuesta correcta al reintentar, mientras verifica que los datos locales siguen accesibles. También se comprobó que el endpoint público GET /posts/1 responde desde el entorno de desarrollo.

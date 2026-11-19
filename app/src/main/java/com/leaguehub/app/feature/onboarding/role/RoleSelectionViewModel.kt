@@ -1,6 +1,8 @@
 package com.leaguehub.app.feature.onboarding.role
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import com.leaguehub.app.data.repository.UserSessionRepository
 import com.leaguehub.app.data.session.SessionRole
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +39,15 @@ class RoleSelectionViewModel(
                 }
             }
 
+            RoleSelectionEvent.BackClicked -> viewModelScope.launch {
+                sessionRepository.logoutAndWait()
+                _state.update { it.copy(isCancelled=true) }
+            }
+            RoleSelectionEvent.ConfigureLeagueClicked -> {
+                sessionRepository.selectRole(SessionRole.ORGANIZER)
+                sessionRepository.completeOnboarding()
+                _state.update { it.copy(selectedRole=UserRole.ORGANIZER,isSelectionConfirmed=true) }
+            }
             RoleSelectionEvent.ContinueClicked -> {
                 val role = when (_state.value.selectedRole) {
                     UserRole.PLAYER -> SessionRole.PLAYER
@@ -44,6 +55,7 @@ class RoleSelectionViewModel(
                 }
 
                 sessionRepository.selectRole(role)
+                sessionRepository.completeOnboarding()
 
                 _state.update {
                     it.copy(isSelectionConfirmed = true)

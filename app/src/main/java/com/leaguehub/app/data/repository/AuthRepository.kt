@@ -52,6 +52,7 @@ class AuthRepository(private val database: LeagueHubDatabase, private val sessio
             }
             account.toSession()
         }
+        sessionRepository.session.value
     }
     private fun UserAccountEntity.toSession() = UserSession(
         userId = userId, userName = name, email = email, role = role?.let(SessionRole::valueOf),

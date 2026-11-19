@@ -37,6 +37,8 @@ fun RegisterRoute(
         }
     }
 
+    LaunchedEffect(state.isCancelled) { if(state.isCancelled) onBack() }
+
     RegisterScreen(
         name = state.name,
         email = state.email,
@@ -82,6 +84,6 @@ fun RegisterRoute(
             )
         },
 
-        onBackClick = onBack
+        onBackClick = { viewModel.onEvent(RegisterEvent.BackClicked) }
     )
 }

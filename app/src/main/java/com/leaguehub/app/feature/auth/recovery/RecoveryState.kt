@@ -1,8 +1,2 @@
 package com.leaguehub.app.feature.auth.recovery
-
-data class RecoveryState(
-    val email: String = "",
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null,
-    val codeSent: Boolean = false
-)
+data class RecoveryState(val title:String="Recuperar acceso",val description:String="Las cuentas se guardan únicamente en este teléfono. Esta versión local no envía correos ni códigos de recuperación.",val instructions:String="Si tienes una sesión abierta, puedes cambiar la contraseña desde Perfil usando la contraseña actual. Si la olvidaste, crea otra cuenta; la nueva cuenta no tendrá los permisos de la anterior.")

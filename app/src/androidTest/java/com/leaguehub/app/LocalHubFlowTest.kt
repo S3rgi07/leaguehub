@@ -36,7 +36,7 @@ class LocalHubFlowTest {
             runBlocking { sessions.restoreCompleted.first { it };auth.register("Ana Local","ana-ui@prueba.com","Prueba123") }
             sessions.selectRole(SessionRole.ORGANIZER)
             vm=LocalHubViewModel(CompetitionRepository(db),sessions,auth,db.userAccountDao())
-            compose.setContent { val s by vm.state.collectAsStateWithLifecycle();LeagueHubTheme { LocalHubScreen(s,vm) } }
+            compose.setContent { LocalTestHost(vm,sessions,db) }
             compose.waitUntil(10_000) { !vm.state.value.loading }
             tab("LEAGUES");click("Crear liga")
             compose.onNodeWithTag("form-save").performClick()
@@ -67,7 +67,7 @@ class LocalHubFlowTest {
             compose.onNodeWithText("Ana Actualizada").assertIsDisplayed()
             tab("MATCHES");click("Ver eventos")
             val event=vm.state.value.data.events.single()
-            compose.runOnIdle { vm.delete("event",event.id,"Gol") }
+            compose.runOnIdle { vm.onEvent(LocalEvent.RequestDelete("event",event.id,"Gol")) }
             compose.onNodeWithTag("delete-confirm").performClick()
             compose.waitUntil(5_000) { vm.state.value.data.events.isEmpty() }
             click("Corregir resultado");field("homeScore","0");field("awayScore","2");save()
@@ -91,7 +91,7 @@ class LocalHubFlowTest {
             }
             sessions.selectRole(SessionRole.ORGANIZER)
             vm=LocalHubViewModel(repo,sessions,auth,db.userAccountDao())
-            compose.setContent { val s by vm.state.collectAsStateWithLifecycle();LeagueHubTheme { LocalHubScreen(s,vm) } }
+            compose.setContent { LocalTestHost(vm,sessions,db) }
             compose.waitUntil(10_000) { !vm.state.value.loading }
             tab("LEAGUES");click("Editar liga");field("name","Liga corregida");save()
             compose.waitUntil(5_000) { vm.state.value.league?.name=="Liga corregida" }

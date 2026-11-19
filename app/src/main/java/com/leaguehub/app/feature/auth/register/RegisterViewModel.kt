@@ -20,6 +20,7 @@ class RegisterViewModel(
 
     fun onEvent(event: RegisterEvent) {
         when (event) {
+            RegisterEvent.BackClicked -> _state.update { it.copy(isCancelled=true) }
 
             is RegisterEvent.NameChanged -> {
                 _state.update {

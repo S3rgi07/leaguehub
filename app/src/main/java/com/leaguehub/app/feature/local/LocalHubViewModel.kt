@@ -13,32 +13,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-enum class LocalSection(val title: String) { HOME("Inicio"), LEAGUES("Ligas"), CLUBS("Equipos"), PLAYERS("Jugadores"), MATCHES("Partidos"), TABLE("Tabla"), PROFILE("Perfil") }
-data class FormField(val key: String, val label: String, val value: String = "", val choices: List<Pair<String, String>> = emptyList(), val secret: Boolean = false)
-data class LocalEditor(val kind: String, val id: String, val title: String, val fields: List<FormField>)
-data class PendingDelete(val kind: String, val id: String, val label: String)
-data class LocalState(
-    val session: UserSession = UserSession(), val data: CompetitionSnapshot = CompetitionSnapshot(),
-    val section: LocalSection = LocalSection.HOME, val leagueId: String? = null, val clubId: String? = null,
-    val fixtureId: String? = null, val editor: LocalEditor? = null, val deletion: PendingDelete? = null,
-    val loading: Boolean = true, val busy: Boolean = false, val error: String? = null, val message: String? = null,
-    val followedClubIds: Set<String> = emptySet()
-) {
-    val league get() = data.leagues.find { it.id == leagueId }
-    val clubs get() = data.clubs.filter { it.leagueId == leagueId }
-    val players get() = data.players.filter { it.clubId in clubs.map { c -> c.id } }
-    val fixtures get() = data.fixtures.filter { it.leagueId == leagueId }
-    val fixture get() = fixtures.find { it.id == fixtureId }
-    val canManage get() = session.role == SessionRole.ORGANIZER && league?.ownerId == session.userId
-    val myPlayer get() = data.players.find { it.accountId == session.userId && it.accountId != null }
-}
-
 class LocalHubViewModel(
     private val repository: CompetitionRepository,
     private val sessions: UserSessionRepository,
     private val auth: AuthRepository,
     private val accounts: UserAccountDao,
-    private val followed: FollowedTeamsRepository = FollowedTeamsRepository()
+    private val followed: FollowedTeamsRepository = FollowedTeamsRepository(),
+    private val appearanceStorage: UserScopedState<String>? = null
 ) : ViewModel() {
     private val mutable = MutableStateFlow(LocalState(session = sessions.session.value))
     val state = mutable.asStateFlow()
@@ -46,10 +27,35 @@ class LocalHubViewModel(
     init {
         viewModelScope.launch { sessions.session.collect { session -> mutable.update { it.copy(session = session) } } }
         viewModelScope.launch { followed.followedTeamIds.collect { ids -> mutable.update { it.copy(followedClubIds = ids) } } }
+        appearanceStorage?.let { storage -> viewModelScope.launch { storage.state.collect { value -> mutable.update { it.copy(appearance=value) } } } }
         reload()
     }
-    fun reload() { loadJob?.cancel(); loadJob = viewModelScope.launch {
+
+    fun onEvent(event: LocalEvent) {
+        when(event) {
+            LocalEvent.Retry -> reload()
+            is LocalEvent.SelectLeague -> league(event.id)
+            is LocalEvent.SelectClub -> club(event.id)
+            is LocalEvent.SelectFixture -> fixture(event.id)
+            is LocalEvent.Follow -> follow(event.id)
+            is LocalEvent.Edit -> edit(event.kind,event.id)
+            is LocalEvent.RequestDelete -> delete(event.kind,event.id,event.label)
+            is LocalEvent.FieldChanged -> field(event.key,event.value)
+            LocalEvent.Save -> save()
+            LocalEvent.Dismiss -> dismiss()
+            LocalEvent.ConfirmDelete -> confirmDelete()
+            LocalEvent.ChangeMode -> mode()
+            LocalEvent.RequestLogout -> mutable.update { it.copy(logoutConfirmation=true) }
+            LocalEvent.CancelLogout -> mutable.update { it.copy(logoutConfirmation=false) }
+            LocalEvent.ConfirmLogout -> { mutable.update { it.copy(logoutConfirmation=false) };logout() }
+            LocalEvent.ChangeAppearance -> if(appearanceStorage!=null) appearanceStorage.update { if(it=="Oscuro") "Claro" else "Oscuro" } else mutable.update { it.copy(appearance=if(it.appearance=="Oscuro") "Claro" else "Oscuro") }
+            is LocalEvent.ReopenResult -> reopenResult(event.id)
+            is LocalEvent.Navigate, LocalEvent.Back, LocalEvent.OpenBackups -> Unit // platform navigation belongs to each route's effect collector
+        }
+    }
+    private fun reload() { loadJob?.cancel(); loadJob = viewModelScope.launch {
         mutable.update { it.copy(loading = true, error = null) }
+        sessions.restoreCompleted.first { it }
         try { repository.snapshot.collect { data -> mutable.update { current ->
             val selected = current.leagueId?.takeIf { id -> data.leagues.any { it.id == id } }
                 ?: sessions.session.value.selectedLeagueId?.takeIf { id -> data.leagues.any { it.id == id } }
@@ -59,18 +65,17 @@ class LocalHubViewModel(
         } } } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { mutable.update { it.copy(loading = false, error = "No se pudieron leer los datos. Reintenta antes de continuar.") } }
     } }
-    fun section(section: LocalSection) { if (!mutable.value.busy) mutable.update { it.copy(section = section, message = null) } }
-    fun league(id: String) { sessions.selectLeague(id); mutable.update { it.copy(leagueId = id, clubId = null, fixtureId = null) } }
-    fun club(id: String?) { mutable.update { it.copy(clubId = id) } }
-    fun fixture(id: String?) { mutable.update { it.copy(fixtureId = id) } }
-    fun follow(id: String) { if (mutable.value.data.clubs.any { it.id == id }) followed.toggle(id) }
-    fun dismiss() { if (!mutable.value.busy) mutable.update { it.copy(editor = null, deletion = null, error = null) } }
-    fun clearMessage() { mutable.update { it.copy(message = null, error = null) } }
-    fun field(key: String, value: String) { if (!mutable.value.busy) mutable.update { state -> state.copy(error = null, editor = state.editor?.let { editor -> editor.copy(fields = editor.fields.map { if (it.key == key) it.copy(value = value) else it }) }) } }
-    fun mode() { sessions.selectRole(if (mutable.value.session.role == SessionRole.ORGANIZER) SessionRole.PLAYER else SessionRole.ORGANIZER) }
-    fun logout() { perform { sessions.logoutAndWait() } }
-    fun delete(kind: String, id: String, label: String) { if (mutable.value.canManage) mutable.update { it.copy(deletion = PendingDelete(kind, id, label), error = null) } }
-    fun confirmDelete() { val deletion = mutable.value.deletion ?: return; perform {
+    private fun league(id: String) { sessions.selectLeague(id); mutable.update { it.copy(leagueId = id, clubId = null, fixtureId = null) } }
+    private fun club(id: String?) { mutable.update { it.copy(clubId = id) } }
+    private fun fixture(id: String?) { mutable.update { it.copy(fixtureId = id) } }
+    private fun follow(id: String) { if (mutable.value.data.clubs.any { it.id == id }) followed.toggle(id) }
+    private fun dismiss() { if (!mutable.value.busy) mutable.update { it.copy(editor = null, deletion = null, error = null) } }
+    private fun clearMessage() { mutable.update { it.copy(message = null, error = null) } }
+    private fun field(key: String, value: String) { if (!mutable.value.busy) mutable.update { state -> state.copy(error = null, editor = state.editor?.let { editor -> editor.copy(fields = editor.fields.map { if (it.key == key) it.copy(value = value) else it }) }) } }
+    private fun mode() { sessions.selectRole(if (mutable.value.session.role == SessionRole.ORGANIZER) SessionRole.PLAYER else SessionRole.ORGANIZER) }
+    private fun logout() { perform { sessions.logoutAndWait() } }
+    private fun delete(kind: String, id: String, label: String) { if (mutable.value.canManage) mutable.update { it.copy(deletion = PendingDelete(kind, id, label), error = null) } }
+    private fun confirmDelete() { val deletion = mutable.value.deletion ?: return; perform {
         repository.delete(owner(), deletion.kind, deletion.id)
     } }
     private fun owner() = requireNotNull(sessions.session.value.userId) { "Inicia sesión de nuevo" }
@@ -88,14 +93,14 @@ class LocalHubViewModel(
             }) } }
         }
     }
-    fun edit(kind: String, id: String? = null) {
+    private fun edit(kind: String, id: String? = null) {
         val s = mutable.value
         if (s.loading || s.busy) return
         if (kind == "league" && id == null) { if (s.session.role != SessionRole.ORGANIZER) return }
         else if (kind !in listOf("profile", "password") && !s.canManage) return
         val clubs = s.clubs.map { it.id to it.name }
         fun f(key: String, label: String, value: String = "") = FormField(key, label, value)
-        fun choice(key: String, label: String, value: String?, values: List<Pair<String,String>>) = FormField(key, label, value ?: values.firstOrNull()?.first.orEmpty(), values)
+        fun choice(key: String, label: String, value: String?, values: List<Pair<String,String>>) = FormField(key, label, value?.takeIf { selected -> values.any { it.first==selected } } ?: values.firstOrNull()?.first.orEmpty(), values)
         val fields = when(kind) {
             "league" -> { val item=s.data.leagues.find { it.id==id }; listOf(f("name","Nombre de liga",item?.name.orEmpty()),f("season","Temporada",item?.season ?: "${java.time.LocalDate.now().year}")) }
             "club" -> listOf(f("name","Nombre de equipo",s.clubs.find { it.id==id }?.name.orEmpty()))
@@ -116,7 +121,7 @@ class LocalHubViewModel(
             if(mutable.value.editor?.id==id) field("email",email)
         } }
     }
-    fun save() {
+    private fun save() {
         val s=mutable.value; val editor=s.editor ?: return
         val values=editor.fields.associate { it.key to it.value.trim() }
         fun v(key: String)=values[key].orEmpty()
@@ -136,5 +141,5 @@ class LocalHubViewModel(
             }
         }
     }
-    fun reopenResult(id: String) { perform { repository.saveFixture(owner(),mutable.value.fixtures.first { it.id==id }.copy(homeScore=null,awayScore=null)) } }
+    private fun reopenResult(id: String) { perform { repository.saveFixture(owner(),mutable.value.fixtures.first { it.id==id }.copy(homeScore=null,awayScore=null)) } }
 }

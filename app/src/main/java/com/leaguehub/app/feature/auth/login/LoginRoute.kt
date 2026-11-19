@@ -13,7 +13,7 @@ import com.leaguehub.app.LeagueHubApplication
 
 @Composable
 fun LoginRoute(
-    onLoginSuccess: () -> Unit = {},
+    onLoginSuccess: (LoginTarget) -> Unit = {},
     onForgotPasswordClick: () -> Unit = {},
     onCreateAccountClick: () -> Unit = {}
 ) {
@@ -34,10 +34,17 @@ fun LoginRoute(
 
     LaunchedEffect(state.isLoginSuccessful) {
         if (state.isLoginSuccessful) {
-            onLoginSuccess()
+            state.target?.let(onLoginSuccess)
         }
     }
 
+    LaunchedEffect(state.navigationAction) {
+        when(state.navigationAction) {
+            LoginAction.RECOVERY -> { viewModel.onEvent(LoginEvent.NavigationHandled);onForgotPasswordClick() }
+            LoginAction.REGISTER -> { viewModel.onEvent(LoginEvent.NavigationHandled);onCreateAccountClick() }
+            LoginAction.NONE -> Unit
+        }
+    }
     LoginScreen(
         email = state.email,
         password = state.password,
@@ -69,7 +76,7 @@ fun LoginRoute(
             )
         },
 
-        onForgotPasswordClick = onForgotPasswordClick,
-        onCreateAccountClick = onCreateAccountClick
+        onForgotPasswordClick = { viewModel.onEvent(LoginEvent.ForgotPasswordClicked) },
+        onCreateAccountClick = { viewModel.onEvent(LoginEvent.CreateAccountClicked) }
     )
 }
