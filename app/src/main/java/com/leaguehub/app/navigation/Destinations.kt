@@ -109,3 +109,5 @@ data class LiveControlDestination(
 data class PublishedResultDestination(
     val matchId: String
 )
+@kotlinx.serialization.Serializable
+data object LocalHubDestination

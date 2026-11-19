@@ -1,5 +1,11 @@
 package com.leaguehub.app.feature.auth.register
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -49,6 +55,9 @@ fun RegisterScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .padding(WindowInsets.safeDrawing.asPaddingValues())
+            .imePadding()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 24.dp)
     ) {
 
@@ -105,7 +114,7 @@ fun RegisterScreen(
         RegisterTextField(
             value = name,
             onValueChange = onNameChange,
-            placeholder = "Sofía Méndez"
+            placeholder = "Tu nombre completo"
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -115,7 +124,7 @@ fun RegisterScreen(
         RegisterTextField(
             value = email,
             onValueChange = onEmailChange,
-            placeholder = "sofia@ejemplo.com"
+            placeholder = "correo@ejemplo.com"
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -136,7 +145,7 @@ fun RegisterScreen(
             },
             trailingIcon = {
                 Text(
-                    text = if (passwordVisible) "Ocultar" else "Fuerte",
+                    text = if (passwordVisible) "Ocultar" else "Mostrar",
                     modifier = Modifier.clickable {
                         onTogglePasswordVisibility()
                     },
@@ -188,7 +197,7 @@ fun RegisterScreen(
 
         VerifiableProfileCard()
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(24.dp))
 
         LeagueHubButton(
             text = if (isLoading) "Registrando..." else "Continuar",
@@ -306,8 +315,8 @@ private fun VerifiableProfileCard() {
 private fun RegisterScreenPreview() {
     LeagueHubTheme {
         RegisterScreen(
-            name = "Sofía Méndez",
-            email = "sofia@ejemplo.com",
+            name = "Tu nombre completo",
+            email = "correo@ejemplo.com",
             password = "LeagueHub123",
             termsAccepted = true
         )
@@ -322,8 +331,8 @@ private fun RegisterScreenPreview() {
 private fun RegisterTermsPendingPreview() {
     LeagueHubTheme {
         RegisterScreen(
-            name = "Sofía Méndez",
-            email = "sofia@ejemplo.com",
+            name = "Tu nombre completo",
+            email = "correo@ejemplo.com",
             password = "LeagueHub123",
             termsAccepted = false
         )

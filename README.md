@@ -1,113 +1,98 @@
 # LeagueHub
 
-Aplicación Android en Jetpack Compose para consultar ligas, partidos, tablas, equipos y
-perfiles, además de gestionar partidos desde el rol de organizador.
+Aplicación Android local en Jetpack Compose para administrar ligas, equipos, jugadores,
+partidos, resultados y estadísticas. El flujo principal usa datos de Room/SQLite; no requiere
+servidor, conexión a Internet ni una cuenta externa.
 
-## Ejecutar el proyecto
+## Ejecutar
 
-1. Abrir la raíz del repositorio en Android Studio.
-2. Sincronizar Gradle con JDK 25 y Android SDK 37.
-3. Ejecutar la configuración `app` en un emulador o dispositivo Android 8.0 o posterior.
-
-También se puede generar el APK con:
-
-```powershell
-.\gradlew.bat :app:assembleDebug
-```
-
-El APK de entrega está en `APK/LeagueHub-debug.apk`.
-
-## Arquitectura
-
-Las funcionalidades usan MVI: `Screen`, `Route`, `ViewModel`, `State` y `Event`. La navegación
-se implementa con Navigation Compose y destinos type-safe `@Serializable`. Los repositorios
-compartidos se exponen desde `LeagueHubApplication`.
-
-La documentación del bloque Jugador está en `docs/INTEGRANTE-2.md` y la del bloque Match
-Center/Organizador en `docs/integrante-3.md`.
-
-## Servicios
-
-- Google Maps: P09 abre la ubicación o las indicaciones mediante una URL segura y un Intent.
-- Compartir de Android: P09 y P11 abren el selector del sistema con el resumen correspondiente.
-- JSONPlaceholder: Retrofit consulta una publicación pública y muestra el anuncio remoto en Home,
-  con manejo de error y reintento.
-- Room/SQLite: `leaguehub.db` conserva cuentas locales, sesión, rol, liga, onboarding,
-  equipos seguidos, apariencia, preferencias de avisos/ubicación, notificaciones leídas y
-  cambios del partido de demostración del organizador. Los datos editables se separan por usuario.
-- El registro crea una cuenta local y el login comprueba su correo normalizado y contraseña.
-  Las contraseñas se guardan como hash PBKDF2 con sal aleatoria; no se guardan en texto plano.
-- Inicio y Mi perfil observan la sesión activa. Una cuenta nueva empieza sin equipo, dorsal
-  ni estadísticas personales. Abrir un jugador desde una plantilla sigue mostrando ese jugador.
-
-## Datos y alcance actual
-
-La base está en el almacenamiento privado de Android, en la ruta que devuelve
-`context.getDatabasePath("leaguehub.db")` (normalmente
-`/data/user/0/com.leaguehub.app/databases/leaguehub.db`). Room es la capa de acceso a SQLite;
-no es memoria ROM y no hay un servidor de cuentas ni sincronización entre dispositivos.
-
-Tablas:
-
-| Tabla | Contenido |
-|---|---|
-| `user_accounts` | Cuentas, hash/sal de contraseña, rol, liga y onboarding por usuario |
-| `user_session` | Sesión actualmente abierta |
-| `user_data` | Estado editable local por `userId` y `dataKey`: equipos seguidos, apariencia, preferencias, notificaciones y flujo del organizador |
-
-La versión 2 incluye migración desde la versión 1 y conserva su sesión. Los registros antiguos
-no guardaban contraseña ni una cuenta recuperable: para volver a entrar después de cerrar esa
-sesión hay que crear una cuenta una vez. Se retiró el acceso fijo de Sofía.
-
-Para probar: crea dos cuentas desde Registro, cambia entre ellas cerrando sesión e iniciando con
-cada correo/contraseña y verifica Inicio/Perfil. Sigue un equipo o cambia una preferencia,
-reinicia la aplicación y vuelve a entrar: el cambio debe permanecer asociado a esa cuenta.
-
-**Aún son demostraciones:** catálogos de ligas/equipos/jugadores, calendario, estadísticas,
-noticias, predicciones, cámara/OCR y envío de correo. El organizador conserva localmente las
-ediciones que permiten las pantallas actuales (marcador, árbitro, eventos, plantillas, pausa y
-publicación) para el único flujo de partido compartido que ya tenía el proyecto; no es todavía
-un CRUD de múltiples partidos ni publica en Internet. Los botones de edición de eventos/árbitro
-mantienen sus acciones simplificadas; faltan formularios completos. Las preferencias de ubicación
-y avisos se guardan, pero no sustituyen permisos de Android ni programan notificaciones reales.
-No hay aún alta/edición de ligas, equipos o estadísticas de jugador. La recuperación por correo
-informa que está pendiente, sin afirmar que se envió un código.
-
-## Librerías
-
-- Jetpack Compose y Material 3 para la interfaz.
-- Navigation Compose con Kotlin Serialization para navegación type-safe.
-- AndroidX Lifecycle, ViewModel y StateFlow para MVI.
-- Room para persistencia local y Retrofit con Gson para la llamada HTTP.
-- JUnit, Compose UI Test y Espresso para pruebas.
-
-## Verificación
+1. Abrir esta carpeta (`leaguehub`) en Android Studio.
+2. Usar JDK 25 y Android SDK 37. Ajustar `local.properties` a la ruta del SDK de cada máquina.
+3. Ejecutar `app` en un dispositivo Android 8.0/API 26 o posterior.
 
 ```powershell
 .\gradlew.bat :app:testDebugUnitTest :app:assembleDebug :app:lintDebug
 .\gradlew.bat :app:connectedDebugAndroidTest
 ```
 
-La segunda línea requiere un emulador o dispositivo conectado.
+La última tarea requiere emulador o teléfono conectado. El APK de entrega es
+`APK/LeagueHub-debug.apk`; el APK que genera Gradle está en
+`app/build/outputs/apk/debug/app-debug.apk`.
 
-## Avance en FeatureFinal
+## Recorrido funcional local
 
-Se inició la fase local definitiva. Room v3 incorpora `leagues`, `clubs`, `players` y
-`fixtures`, con relaciones y migración desde las versiones anteriores. CompetitionRepository
-valida propietario, equipos de la misma liga, dorsal, fecha y marcador. Esta base aún no está
-conectada a los formularios ni sustituye los fixtures de las pantallas.
+1. Crear una cuenta con nombre, correo y contraseña. Elegir Organizador o Jugador.
+2. Como organizador: Ligas → Crear liga → nombre y temporada.
+3. Abrir la liga; Equipos → crear al menos dos equipos.
+4. Jugadores → crear la plantilla, indicando equipo, nombre, posición y dorsal (1–99).
+   El dorsal no se repite en el mismo equipo.
+5. Para vincular un jugador con un perfil, registrar primero su cuenta en este teléfono e
+   ingresar su correo en el formulario del jugador. Cada cuenta se vincula a un solo jugador.
+   Dejar el correo vacío permite crear jugadores sin cuenta o quitar una vinculación.
+6. Partidos → crear partido con equipos distintos de la liga, fecha, hora, cancha y jornada.
+7. Ver eventos → agregar o editar goles, asistencias, tarjetas y participaciones. Una
+   participación permite guardar minutos jugados y valoración opcional de 0 a 10.
+8. Registrar resultado → ingresar ambos marcadores. Se puede corregir el resultado o volver
+   el partido a Programado. El marcador no puede ser menor que los goles ya registrados.
+9. Tabla refleja los resultados: victoria 3 puntos, empate 1. Desempates por diferencia de
+   goles, goles a favor y nombre. Perfil y Jugadores calculan estadísticas desde los eventos
+   de partidos con resultado. Corregir, reabrir o eliminar partidos recalcula los totales.
+10. Perfil permite editar el nombre de la cuenta, cambiar contraseña verificando la actual,
+    cambiar apariencia y modo, y cerrar sesión. Las contraseñas no se muestran ni se guardan
+    en texto plano. Para volver a entrar se usa el correo y la contraseña registrados.
 
-Para continuar en otra máquina:
+Las ligas del dispositivo se pueden consultar desde cualquier cuenta. Solo su creador, en modo
+Organizador, puede modificarlas. Cambiar a organizador no permite editar ligas ajenas.
 
-1. Clonar el repositorio y cambiar a `FeatureFinal`; actualizar con `git pull --ff-only`.
-2. Configurar JDK 25 y Android SDK 37; `local.properties` es específico de cada máquina.
-3. Ejecutar las verificaciones de este README.
-4. Siguiente bloque: formularios MVI de ligas y equipos, accesibles desde el organizador;
-   después jugadores y partidos. Usar CompetitionRepository y comprobar el propietario desde
-   la sesión; evitar introducir otro catálogo paralelo en memoria.
-5. Después conectar perfil, calendario y tabla con Room; calcular posiciones desde resultados,
-   añadir eventos y estadísticas, y completar edición/eliminación con protección de relaciones.
+La eliminación solicita confirmación. Para borrar ligas o equipos se deben quitar primero
+sus dependencias. Un jugador con eventos no se puede eliminar ni trasladar a otro equipo.
+Eliminar un partido elimina también sus eventos y actualiza las estadísticas.
 
-Las cuentas y datos locales del emulador no viajan con Git. El APK en `APK/` corresponde al
-último bloque de perfil validado; para probar el código más reciente generar el APK con Gradle.
-Los cambios personales de Android Studio que permanezcan fuera de los commits deben conservarse.
+## Persistencia y arquitectura
+
+Room v4 almacena la base privada `leaguehub.db` en la ruta de
+`context.getDatabasePath("leaguehub.db")`, habitualmente
+`/data/user/0/com.leaguehub.app/databases/leaguehub.db`.
+
+| Tabla | Datos |
+|---|---|
+| `user_accounts` | Cuentas, hash PBKDF2 y sal aleatoria, preferencias de rol/liga |
+| `user_session` | Sesión activa |
+| `user_data` | Preferencias locales por cuenta; también conserva snapshots históricos |
+| `leagues` | Liga, temporada y propietario |
+| `clubs` | Equipos relacionados con su liga |
+| `players` | Plantilla y vínculo opcional con una cuenta |
+| `fixtures` | Partidos y sus resultados |
+| `match_events` | Eventos, participaciones, minutos y valoraciones |
+
+Las migraciones 1→2→3→4 conservan cuentas y datos estructurados existentes. Las antiguas
+sesiones de demostración que no tenían cuenta se cierran al arrancar y se solicita crear
+una cuenta local. Los catálogos falsos anteriores nunca fueron ligas guardadas y no se
+convierten en registros reales.
+
+`feature/local` contiene el ViewModel, estado, formularios y pantalla principal.
+`CompetitionRepository` valida propiedad y relaciones dentro de transacciones. Las listas
+observan Room mediante Flow; la tabla y los totales se derivan de los registros actuales.
+La navegación real entra por `LocalHubDestination`. Los antiguos screens y fixtures se
+conservan como referencias de diseño y para pruebas aisladas, fuera del recorrido principal.
+Los documentos `docs/INTEGRANTE-2.md` y `docs/integrante-3.md` describen entregas históricas.
+
+## Alcance de esta versión
+
+Todo el recorrido anterior funciona en el mismo teléfono. GitHub guarda el código, no la base
+de datos del dispositivo. Las cuentas, ligas y cambios no se sincronizan entre teléfonos.
+La recuperación por correo y los accesos Google/Apple requieren servicios externos y no forman
+parte de esta versión local. La pantalla de recuperación lo explica sin simular un envío.
+Cámara/OCR, predicciones, avisos programados y publicación en Internet quedan fuera del flujo
+local; no se presentan como acciones disponibles. Compartir un partido abre el selector de Android. Abrir ubicación delega en una aplicación de mapas instalada (su disponibilidad sin conexión depende de esa aplicación). Desde Equipos se puede seguir/dejar de seguir equipos; la selección se conserva por cuenta y aparece en Perfil.
+
+## Continuar el desarrollo
+
+La rama de trabajo es `FeatureFinal`. Recuperar con `git fetch origin`, `git switch FeatureFinal`
+y `git pull --ff-only`. Se hacen commits cortos en español y se suben al terminar bloques validados.
+Conservar los cambios personales de Android Studio (`.idea`) que estén fuera de esos commits.
+
+La cobertura incluye cálculos y correcciones de tabla, estadísticas, claves foráneas, propiedad,
+reapertura de la base, migraciones, cuentas, vinculación y el recorrido visual de formularios y
+registro → contraseña → salir → entrar → recrear actividad. No equivale a una garantía sobre
+cada modelo de teléfono: las pruebas instrumentadas se ejecutan en el emulador disponible.

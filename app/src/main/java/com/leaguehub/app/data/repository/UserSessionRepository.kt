@@ -82,6 +82,11 @@ class UserSessionRepository(
             if (_session.value == UserSession()) sessionDao.clear()
         }))
     }
+    suspend fun logoutAndWait() = submit {
+        persistAccountPreferences(UserSessionEntity.fromDomain(_session.value))
+        sessionDao.clear()
+        _session.value = UserSession()
+    }
     private suspend fun persistAccountPreferences(snapshot: UserSessionEntity) {
         snapshot.userId?.let {
             accountDao?.updatePreferences(it, snapshot.role, snapshot.selectedLeagueId, snapshot.onboardingCompleted)

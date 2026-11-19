@@ -16,6 +16,7 @@ class AuthRepository(private val database: LeagueHubDatabase, private val sessio
         sessionRepository.authenticate {
             val session = sessionRepository.session.value
             val id = requireNotNull(session.userId) { "Inicia sesión de nuevo" }
+            require(database.userAccountDao().findById(id) != null) { "Esta sesión antigua requiere crear una cuenta" }
             database.userAccountDao().updateName(id, name.trim())
             session.copy(userName = name.trim())
         }
