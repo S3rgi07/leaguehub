@@ -19,8 +19,8 @@ android {
         applicationId = "com.leaguehub.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 3
-        versionName = "1.2-firebase"
+        versionCode = 4
+        versionName = "1.2.1-firebase"
 
         testInstrumentationRunner = "com.leaguehub.app.LeagueHubTestRunner"
         buildConfigField("boolean", "FIREBASE_CONFIGURED", firebaseConfigured.toString())

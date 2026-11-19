@@ -2,6 +2,8 @@
   "name": "leaguehub-firebase-tests",
   "private": true,
   "scripts": {
+    "config:android": "firebase apps:sdkconfig ANDROID 1:308063763054:android:1bc016e549d4b2d860847f --out ../app/google-services.json --project leaguehub-grupo-2026 --non-interactive",
+    "deploy:backend": "firebase deploy --only auth,firestore:rules,firestore:indexes --project leaguehub-grupo-2026 --non-interactive",
     "test:rules": "firebase emulators:exec --project demo-leaguehub --only firestore \"node --test rules.test.mjs\"",
     "emulators": "firebase emulators:start --project demo-leaguehub --only auth,firestore"
   },

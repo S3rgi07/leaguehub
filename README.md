@@ -1,46 +1,54 @@
 # LeagueHub
 
-Aplicación Android local en Jetpack Compose para administrar ligas, equipos, jugadores,
-partidos, resultados y estadísticas. La gestión deportiva usa datos de Room/SQLite y funciona sin conexión ni servidor propio.
+Aplicación Android en Jetpack Compose para administrar ligas, equipos, jugadores,
+partidos, resultados y estadísticas. Room/SQLite conserva los datos sin conexión y Firebase
+sincroniza los datos deportivos entre las cuentas conectadas.
 Inicio también consulta un anuncio remoto de demostración cuando hay Internet; un error de red
 no bloquea las funciones locales.
 
-## Retomar aquí: rama `featureFirebase` · Firebase 1.2
+## Firebase conectado · rama `featureFirebase` · versión 1.2.1
 
-**El código está integrado y la rama local estable sigue en `FeatureFinal`.** El archivo que se
-proporcionó corresponde al proyecto `leaguehub-ffd96` y al paquete `com.leaguehub.app`; se copió
-a `app/google-services.json`. Ese archivo se excluye de Git y no se han solicitado claves de
-administrador. En otra máquina vuelve a descargarlo de Firebase Console y colócalo en `app/`.
-Sin el archivo la aplicación compila y conserva el modo local, pero no activa Firebase.
+El proyecto del grupo es **LeagueHub**, identificador **`leaguehub-grupo-2026`**
+([Firebase Console](https://console.firebase.google.com/project/leaguehub-grupo-2026/overview)).
+La app Android registrada es `com.leaguehub.app`. Authentication por correo/contraseña está
+habilitado; Firestore Standard `(default)` está creado en `us-central1` y sus reglas e índices
+están publicados. La configuración local es `app/google-services.json` y permanece excluida
+de Git. El APK de esta rama ya incorpora esa configuración.
 
-### Lo que falta en Firebase Console, antes de la exposición
+### Preparar otra computadora del grupo
 
-1. Abrir el proyecto **leaguehub-ffd96** y habilitar **Authentication → Correo electrónico/contraseña**.
-2. Crear **Cloud Firestore Standard**, base `(default)`, si todavía no existe, eligiendo su ubicación.
-3. Publicar **exactamente** las reglas de `firebase/firestore.rules`. Desde esta carpeta:
+Con una cuenta que tenga acceso a ese proyecto, ejecutar desde la raíz:
 
 ```powershell
 cd firebase
 npm ci --include=dev
 npx firebase login
-npx firebase deploy --project leaguehub-ffd96 --only firestore:rules,firestore:indexes
+npm run config:android
 cd ..
 ```
 
-También se pueden copiar las reglas a la pestaña Reglas de Firestore Console. No dejar reglas
-abiertas de modo prueba. El JSON de Android no permite publicar reglas ni activar servicios;
-para esos pasos hace falta la sesión del dueño del proyecto en Console/CLI.
+Para publicar cambios posteriores de Authentication o reglas: `cd firebase` y
+`npm run deploy:backend`. El archivo `firebase/.firebaserc` selecciona el proyecto del grupo.
+Las pruebas de emuladores siguen usando explícitamente `demo-leaguehub`.
+Sin el JSON la aplicación compila en modo local; antes de generar un APK de entrega, comprobar
+que se ejecuta `processDebugGoogleServices` y que `FIREBASE_CONFIGURED=true`.
 
-4. Antes de actualizar, exportar un respaldo desde la versión local y conservar el APK 1.1.
+### Verificación pendiente en teléfonos
+
+1. Antes de actualizar, exportar un respaldo desde la versión local y conservar el APK 1.1.
    Instalar el APK de esta rama **en dos teléfonos**, sin borrar la instalación anterior. En el
 primero entrar con la cuenta local o ir a **Perfil → Configuración → Sincronización Firebase** y
 conectarla con su contraseña. Esperar **Sincronización al día**. Entrar con el mismo correo y
 contraseña en el segundo, crear/editar un resultado y comprobar el cambio en ambos.
-5. Probar la reconexión y cerrar un conflicto desde esa pantalla antes de la exposición.
+2. Probar la reconexión y cerrar un conflicto desde esa pantalla antes de la exposición.
+3. Solicitar recuperación con un correo propio y comprobar la recepción del mensaje real.
 
-**No se ha verificado producción ni desplegado reglas en el proyecto real.** Las pruebas de
-sincronización usan Auth/Firestore Emulator Suite y dos clientes SDK con bases Room separadas.
-No deben confundirse con una prueba física en dos teléfonos contra el proyecto de producción.
+El 19 de noviembre de 2026 pasaron siete comprobaciones contra Firebase real con clientes SDK:
+registro/acceso, lectura y escritura entre dos clientes, rechazo de revisiones antiguas, lectura
+de deportes y protección de escritura/perfiles entre cuentas, cambio de contraseña y aceptación
+de la solicitud de recuperación. Se retiraron únicamente las cuentas y documentos temporales
+creados por esa comprobación. Esto complementa las pruebas de Auth/Firestore emulados con Room;
+todavía no equivale a probar el recorrido Android en dos teléfonos ni a comprobar un buzón real.
 
 ### Implementación que ya está en esta rama
 
@@ -67,16 +75,19 @@ No deben confundirse con una prueba física en dos teléfonos contra el proyecto
 
 ### Validación de esta entrega Firebase
 
-- APK `1.2-firebase` (código 3), disponible en [`APK/LeagueHub-debug.apk`](APK/LeagueHub-debug.apk).
-- 25 pruebas JVM y 34 pruebas instrumentadas Android aprobadas, sin pruebas omitidas.
-- 5 pruebas de reglas Firestore aprobadas. Build y lint correctos: 0 errores, 34 advertencias.
+- APK `1.2.1-firebase` (código 4), conectado a `leaguehub-grupo-2026`, en [`APK/LeagueHub-debug.apk`](APK/LeagueHub-debug.apk).
+- Verificación actual: 25 pruebas JVM aprobadas; compilación, APK y compilación de las pruebas
+  instrumentadas correctos. Lint: 0 errores y 33 advertencias. No había un dispositivo Android conectado.
+- 5 pruebas de reglas Firestore aprobadas y 7 comprobaciones SDK contra el proyecto real.
+- La validación histórica de la rama incluye 34 pruebas instrumentadas Android aprobadas,
+  sin omitidas; no se volvieron a ejecutar en esta computadora.
 - Se probó migración Room v4 → v5 con conservación de datos, SDK Firebase con dos clientes,
   cola tras reabrir la base, reconexión, conflictos, copia recuperable, eliminación remota,
   documentos inválidos, cambio de contraseña y solicitud de recuperación en emuladores.
 - Compilación sin `google-services.json` también verificada para conservar el modo local.
 - Captura de la nueva pantalla con un estado de prueba: [sincronización](docs/capturas/firebase/sincronizacion.png).
 - Para otra IA: empezar por [`docs/FIREBASE_CONTINUAR.md`](docs/FIREBASE_CONTINUAR.md),
-  continuar en `featureFirebase` y completar primero la configuración manual y las pruebas reales.
+  continuar en `featureFirebase` y completar la prueba física en dos teléfonos.
 
 ### Límites y pendientes reales
 
@@ -313,7 +324,7 @@ elegir modo Organizador e importar el archivo.
 
 ## Persistencia y arquitectura
 
-Room v4 almacena la base privada `leaguehub.db` en la ruta de
+Room v5 almacena la base privada `leaguehub.db` en la ruta de
 `context.getDatabasePath("leaguehub.db")`, habitualmente
 `/data/user/0/com.leaguehub.app/databases/leaguehub.db`.
 
@@ -328,7 +339,8 @@ Room v4 almacena la base privada `leaguehub.db` en la ruta de
 | `fixtures` | Partidos y sus resultados |
 | `match_events` | Eventos, participaciones, minutos y valoraciones |
 
-Las migraciones 1→2→3→4 conservan cuentas y datos estructurados existentes. Las antiguas
+Las migraciones 1→2→3→4→5 conservan cuentas y datos estructurados existentes. La versión 5
+incorpora los vínculos, la cola y las copias de conflictos de Firebase. Las antiguas
 sesiones de demostración que no tenían cuenta se cierran al arrancar y se solicita crear
 una cuenta local. Los catálogos falsos anteriores nunca fueron ligas guardadas y no se
 convierten en registros reales.

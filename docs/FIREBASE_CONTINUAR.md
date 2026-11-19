@@ -4,13 +4,20 @@
 
 - Rama activa: `featureFirebase`, creada desde `FeatureFinal`. No fusionar en `main` hasta validar
   el proyecto real en dos teléfonos. Se conserva el diseño/MVI y toda la captura local.
-- Proyecto recibido: `leaguehub-ffd96`; Android `com.leaguehub.app`. Archivo local:
-  `app/google-services.json`, copiado desde Downloads. Está ignorado en Git; en otra máquina
-  hay que descargarlo del mismo proyecto. No pedir una clave privada de servicio ni pegar claves
+- Proyecto activo del grupo: **LeagueHub**, ID `leaguehub-grupo-2026`, número `308063763054`.
+  Android `com.leaguehub.app`, app ID `1:308063763054:android:1bc016e549d4b2d860847f`.
+  `app/google-services.json` fue descargado oficialmente con Firebase CLI. Está ignorado en Git;
+  en otra máquina se obtiene con `npm run config:android` desde `firebase/`, tras iniciar sesión
+  con una cuenta con acceso al proyecto. No pedir una clave privada de servicio ni pegar claves
   de administrador en Android o en el repositorio.
-- Código listo para configurar Console: Auth correo/contraseña, Firestore `(default)` Standard y
-  reglas. NO se han publicado reglas ni se ha validado el proyecto real. El usuario decidió
-  completar esos pasos al llegar a la universidad. El README principal tiene la lista priorizada.
+- Authentication correo/contraseña habilitado; Firestore `(default)` Standard creado en
+  `us-central1`, con nivel gratuito confirmado al crear la base. Reglas e índices publicados.
+  `firebase/.firebaserc` apunta al proyecto del grupo y `firebase.json` incluye el proveedor
+  `auth.providers.emailPassword`. `npm run deploy:backend` reproduce su despliegue.
+- Se verificó el servicio real con siete comprobaciones SDK: registro/login desde dos clientes,
+  lectura/escritura bidireccional, rechazo de revisión antigua, protección entre cuentas,
+  cambio de contraseña y solicitud de recuperación. Los documentos y cuentas de prueba se
+  retiraron. Aún falta validar Android en dos teléfonos y la recepción en un buzón real.
 - Dependencias Android fijadas: Google Services 4.4.4 y Firebase BoM 34.7.0. Se eligió la BoM
   compatible con Kotlin 2.2.10 de este proyecto. La 35.0.1 descargada durante el desarrollo usa
   metadatos Kotlin 2.4 en Auth y no compila con este Kotlin. No ocultar ese error con flags para
@@ -59,21 +66,21 @@ Las copias de conflictos se conservan en `sync_recovery`. Cada una puede exporta
 pantalla de sincronización como respaldo compatible, e importarse como una copia independiente
 con los IDs remapeados. No subirlas a una cuenta distinta ni borrarlas como parte de un reintento.
 
-## Configuración manual pendiente (prioridad)
+## Continuación pendiente (prioridad)
 
-1. Entrar como dueño en Firebase Console proyecto `leaguehub-ffd96`.
-2. Habilitar Auth por correo/contraseña y crear Cloud Firestore Standard `(default)`.
-3. Publicar `firebase/firestore.rules` e índices incluidos. Usar `npm ci --include=dev` dentro de
-   `firebase`, `npx firebase login`, después
-   `npx firebase deploy --project leaguehub-ffd96 --only firestore:rules,firestore:indexes`.
-4. Instalar el APK de la rama en el teléfono A manteniendo los datos existentes, conectar la cuenta
+1. En una computadora nueva, ejecutar `npm ci --include=dev`, `npx firebase login` y
+   `npm run config:android` dentro de `firebase/`. El proyecto es `leaguehub-grupo-2026`.
+   Auth, Firestore y reglas ya están configurados; `npm run deploy:backend` permite actualizarlos.
+2. Exportar un respaldo de los datos antes de actualizar. Instalar el APK de la rama en el
+   teléfono A manteniendo los datos existentes, conectar la cuenta
    desde la pantalla de sincronización y esperar al estado al día.
-5. Entrar con la misma cuenta en B. Verificar liga, perfil/jugador vinculado, alineaciones, resultado
+3. Entrar con la misma cuenta en B. Verificar liga, perfil/jugador vinculado, alineaciones, resultado
    y estadística. Probar también una cuenta distinta: puede leer deportes pero no editar ligas ajenas.
-6. Desconectar B, editar en ambos, reconectar y comprobar conflicto. Exportar la copia y verificar
+4. Desconectar B, editar en ambos, reconectar y comprobar conflicto. Exportar la copia y verificar
    que los cambios de la versión descartada pueden importarse en una liga independiente.
-7. Verificar correo real de recuperación y cambio de contraseña contra producción. Los emuladores
-   no envían mensajes reales. Después actualizar este estado y considerar el merge de esta rama.
+5. Verificar recepción del correo real de recuperación y completar el cambio desde su enlace.
+   La petición al servicio de producción ya pasó; no se comprobó el buzón. Después actualizar
+   este estado y considerar el merge de esta rama.
 
 ## Comandos de pruebas
 
@@ -154,18 +161,34 @@ local vacía: durante un login, Auth completa su acceso antes de que Room guarde
 provocaría un cierre prematuro. La prueba de dos clientes inicia el motor B antes del login para
 cubrir ese orden real de arranque.
 
-## Resultado de validación del cierre
+## Validación histórica de la rama antes de conectar el proyecto del grupo
 
 El 19 de noviembre de 2026 finalizaron correctamente 25 pruebas JVM, 34 instrumentadas Android
 (sin omitidas) y 5 de reglas Firestore. `assembleDebug` y `lintDebug` correctos: 0 errores y
-34 advertencias. El APK final se compiló con `FIREBASE_CONFIGURED=true`, versión 1.2-firebase,
-código 3. Su hash SHA-256 está en `APK/README.md`. También se verificó por separado que compila
+34 advertencias. El APK de aquella revisión se compiló con `FIREBASE_CONFIGURED=true`, versión
+1.2-firebase, código 3. El APK actual y su hash están descritos en `APK/README.md`. También se verificó por separado que compila
 sin el JSON, con Firebase desactivado. La captura `docs/capturas/firebase/sincronizacion.png`
 corresponde a un estado de conflicto de prueba renderizado, no a producción.
 
 Las pruebas Node de reglas limpian `demo-leaguehub`: ejecutarlas antes o después de las pruebas
-Android, nunca a la vez contra el mismo proyecto emulado. No afectan `leaguehub-ffd96`.
+Android, nunca a la vez contra el mismo proyecto emulado. No afectan `leaguehub-grupo-2026`.
 
 Para continuar desde otra máquina: clonar y cambiar a `featureFirebase`, restaurar el JSON en
 `app/`, instalar SDK/JDK y configurar `local.properties` localmente; después seguir la lista de
 Console y probar dos teléfonos. Nunca solicitar credenciales privadas de administrador para Android.
+
+## Verificación del proyecto del grupo · 19 de noviembre de 2026
+
+- Proyecto final `leaguehub-grupo-2026`, nombre visible LeagueHub. El proyecto provisional
+  descartado se marcó para eliminación; no tenía Firebase ni datos deportivos.
+- `firebase deploy --only auth,firestore:rules,firestore:indexes` completado contra el proyecto real.
+- 7 comprobaciones con SDK contra producción: permisos sin sesión, registro/login, intercambio
+  bidireccional, revisiones, protección entre cuentas, contraseña y petición de recuperación.
+  Se limpiaron solo los documentos y cuentas temporales creados por la comprobación.
+- 25 pruebas JVM aprobadas, `assembleDebug`, `lintDebug` y `compileDebugAndroidTestKotlin`
+  correctos. Lint: 0 errores y 33 advertencias. No se ejecutó instrumentación en esta computadora
+  porque no había emulador/teléfono conectado.
+- 5 pruebas de reglas en el emulador aprobadas antes del despliegue.
+- APK 1.2.1-firebase, código 4, `FIREBASE_CONFIGURED=true`. Hash y archivo en `APK/`.
+- Pendiente: flujo completo Android con dos teléfonos, conflicto/reconexión y lectura del correo
+  real. Mantener separados estos pendientes de lo ya verificado con los SDK y emuladores.
