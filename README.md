@@ -96,3 +96,11 @@ La cobertura incluye cálculos y correcciones de tabla, estadísticas, claves fo
 reapertura de la base, migraciones, cuentas, vinculación y el recorrido visual de formularios y
 registro → contraseña → salir → entrar → recrear actividad. No equivale a una garantía sobre
 cada modelo de teléfono: las pruebas instrumentadas se ejecutan en el emulador disponible.
+
+## Verificación de la entrega local
+
+Compilación y lint completados sin errores. Pasaron 20 pruebas unitarias y 22 pruebas
+instrumentadas en el emulador disponible, incluyendo registro/login, cambio de contraseña,
+recreación de actividad, captura por formularios, edición/eliminación, protección de dependencias,
+modo de lectura, reapertura de datos y migraciones. El APK de `APK/LeagueHub-debug.apk` se
+actualizó desde la compilación comprobada y se verificó su coincidencia por SHA-256.
