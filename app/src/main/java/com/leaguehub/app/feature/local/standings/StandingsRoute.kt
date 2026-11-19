@@ -11,7 +11,7 @@ import com.leaguehub.app.feature.local.*
 import com.leaguehub.app.navigation.*
 @Composable fun StandingsRoute(nav:NavHostController,deps:LocalDependencies,entry:NavBackStackEntry) {
  if(!LocalReady(nav,deps)) return
- val store=localStore(nav,deps)
+ val store=localStore(nav,deps,entry)
  val vm:StandingsViewModel=viewModel(factory=viewModelFactory { initializer { StandingsViewModel(store) } })
  val state by vm.state.collectAsStateWithLifecycle()
  LocalEffects(vm,nav)

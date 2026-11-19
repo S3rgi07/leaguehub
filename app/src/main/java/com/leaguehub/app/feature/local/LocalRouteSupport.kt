@@ -17,10 +17,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavHostController
+import androidx.navigation.NavBackStackEntry
 import com.leaguehub.app.navigation.*
 
-@Composable fun localStore(nav:NavHostController,deps:LocalDependencies):LocalHubViewModel {
- val parent=remember(nav) { nav.getBackStackEntry<LocalHubDestination>() }
+@Composable fun localStore(nav:NavHostController,deps:LocalDependencies,entry:NavBackStackEntry):LocalHubViewModel {
+ val parent=remember(nav,entry) { nav.getBackStackEntry<LocalHubDestination>() }
  return viewModel(viewModelStoreOwner=parent,key="local-store",factory=viewModelFactory { initializer { deps.createStore() } })
 }
 @Composable fun LocalReady(nav:NavHostController,deps:LocalDependencies):Boolean {

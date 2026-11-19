@@ -11,7 +11,7 @@ import com.leaguehub.app.feature.local.*
 import com.leaguehub.app.navigation.*
 @Composable fun BackupRoute(nav:NavHostController,deps:LocalDependencies,entry:NavBackStackEntry) {
  if(!LocalReady(nav,deps)) return
- val store=localStore(nav,deps)
+ val store=localStore(nav,deps,entry)
  val vm:BackupViewModel=viewModel(factory=viewModelFactory { initializer { BackupViewModel(deps.backups,deps.sessions,deps.resolver,store) } })
  val state by vm.state.collectAsStateWithLifecycle()
  LocalEffects(vm,nav) { export,uri -> vm.onEvent(if(export) BackupEvent.ExportSelected(uri) else BackupEvent.ImportSelected(uri)) }

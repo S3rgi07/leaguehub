@@ -11,7 +11,7 @@ import com.leaguehub.app.feature.local.*
 import com.leaguehub.app.navigation.*
 @Composable fun LocalEventsRoute(nav:NavHostController,deps:LocalDependencies,entry:NavBackStackEntry) {
  if(!LocalReady(nav,deps)) return
- val store=localStore(nav,deps)
+ val store=localStore(nav,deps,entry)
  val vm:LocalEventsViewModel=viewModel(factory=viewModelFactory { initializer { LocalEventsViewModel(store,entry.toRoute<LocalEventsDestination>().matchId) } })
  val state by vm.state.collectAsStateWithLifecycle()
  LocalEffects(vm,nav)

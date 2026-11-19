@@ -11,7 +11,7 @@ import com.leaguehub.app.feature.local.*
 import com.leaguehub.app.navigation.*
 @Composable fun LocalProfileRoute(nav:NavHostController,deps:LocalDependencies,entry:NavBackStackEntry) {
  if(!LocalReady(nav,deps)) return
- val store=localStore(nav,deps)
+ val store=localStore(nav,deps,entry)
  val vm:LocalProfileViewModel=viewModel(factory=viewModelFactory { initializer { LocalProfileViewModel(store) } })
  val state by vm.state.collectAsStateWithLifecycle()
  LocalEffects(vm,nav)
