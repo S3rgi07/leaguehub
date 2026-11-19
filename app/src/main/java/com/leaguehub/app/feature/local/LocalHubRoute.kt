@@ -200,7 +200,7 @@ fun LocalHubScreen(s: LocalState, vm: LocalHubViewModel, appearance: String = "O
     s.deletion?.let { pending -> AlertDialog(onDismissRequest=vm::dismiss,title={Text("Eliminar ${pending.label}")},text={Column {
         Text(if(pending.kind=="fixture") "Se eliminará el partido y sus eventos. La tabla y las estadísticas se actualizarán." else "Esta acción no se puede deshacer. Los registros con dependencias no se eliminarán.")
         s.error?.let { Text(it,color=MaterialTheme.colorScheme.error) }
-    }},confirmButton={TextButton(onClick=vm::confirmDelete,enabled=!s.busy) { Text("Eliminar") }},dismissButton={TextButton(onClick=vm::dismiss,enabled=!s.busy) { Text("Cancelar") }}) }
+    }},confirmButton={TextButton(onClick=vm::confirmDelete,enabled=!s.busy,modifier=Modifier.testTag("delete-confirm")) { Text("Eliminar") }},dismissButton={TextButton(onClick=vm::dismiss,enabled=!s.busy) { Text("Cancelar") }}) }
     if(logoutConfirmation) AlertDialog(onDismissRequest={logoutConfirmation=false},title={Text("Cerrar sesión")},text={Text("Tus datos permanecerán guardados en este teléfono.")},confirmButton={TextButton(onClick={logoutConfirmation=false;vm.logout()}) { Text("Salir") }},dismissButton={TextButton(onClick={logoutConfirmation=false}) { Text("Cancelar") }})
 }
 

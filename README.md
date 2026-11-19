@@ -61,7 +61,7 @@ de almacenamiento.
 - Antes de guardar aparece una vista previa con las cantidades y las ligas incluidas. Cancelar
   no cambia la base. Un respaldo vacío se puede consultar, pero no tiene copias que importar.
 - Confirmar crea ligas con el sufijo `(copia)`, nuevos identificadores y el propietario actual.
-  No sobrescribe ni fusiona registros existentes. Importar nuevamente crea otras copias.
+  No sobrescribe ni fusiona registros existentes. Importar nuevamente crea otras copias. Después de importar, abrir Ligas para encontrarlas.
 - No se exportan cuentas, correos de acceso, contraseñas, sesiones, preferencias ni vínculos de
   jugadores con cuentas. Los jugadores importados se pueden vincular después desde Jugadores.
 - Tabla y estadísticas se recalculan desde los resultados y eventos restaurados. Todo el guardado
@@ -123,8 +123,10 @@ cada modelo de teléfono: las pruebas instrumentadas se ejecutan en el emulador 
 
 ## Verificación de la entrega local
 
-Compilación y lint completados sin errores. Pasaron 20 pruebas unitarias y 22 pruebas
+Compilación y lint completados sin errores. Pasaron 20 pruebas unitarias y 25 pruebas
 instrumentadas en el emulador disponible, incluyendo registro/login, cambio de contraseña,
 recreación de actividad, captura por formularios, edición/eliminación, protección de dependencias,
 modo de lectura, reapertura de datos y migraciones. El APK de `APK/LeagueHub-debug.apk` se
 actualizó desde la compilación comprobada y se verificó su coincidencia por SHA-256.
+
+La cobertura de respaldos comprueba exportación sin credenciales, copia independiente al importar varias veces, JSON y referencias inválidos, límites de archivo, reversión de una escritura fallida y el flujo de vista previa/cancelación desde Perfil.
