@@ -1,6 +1,8 @@
 package com.leaguehub.app.feature.local.backup
 import com.leaguehub.app.feature.local.*
 import androidx.compose.runtime.Composable
+import com.leaguehub.app.core.components.*
+import com.leaguehub.app.R
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -9,12 +11,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 @Composable
 fun BackupScreen(state:BackupState,onEvent:(BackupEvent)->Unit) {
- LocalFrame(state.ui,LocalSection.PROFILE,{onEvent(BackupEvent.Common(it))},showLeague=false,showBack=true) {
-  item { Text("Respaldos",style=MaterialTheme.typography.headlineSmall)
+ LocalFrame(state.ui,LocalSection.PROFILE,{onEvent(BackupEvent.Common(it))},showLeague=false,showBack=true,title="Respaldos") {
+  item { HeroCard { LeagueIcon(R.drawable.lh_shield,null,tint=MaterialTheme.colorScheme.primary);LeagueBadge("TUS DATOS, CONTIGO");Text("Respaldos",style=MaterialTheme.typography.headlineMedium)
    Text("Incluyen tus ligas y sus datos deportivos. No incluyen cuentas ni contraseñas.")
    OutlinedButton(onClick={onEvent(BackupEvent.ChooseExport)},enabled=!state.busy && state.ui.organizer) { Text("Exportar respaldo") }
    OutlinedButton(onClick={onEvent(BackupEvent.ChooseImport)},enabled=!state.busy && state.ui.organizer) { Text("Importar respaldo") }
    if(!state.ui.organizer) Text("Cambia al modo organizador desde Perfil para usar respaldos.")
+  }
   }
  }
  BackupDialogs(state,onEvent)

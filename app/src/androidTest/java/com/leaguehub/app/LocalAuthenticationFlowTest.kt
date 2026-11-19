@@ -58,6 +58,7 @@ class LocalAuthenticationFlowTest {
             scenario.recreate()
             compose.waitUntil(15_000) { compose.onAllNodesWithTag("tab-PROFILE").fetchSemanticsNodes().isNotEmpty() }
             compose.onNodeWithTag("tab-PROFILE").performClick()
+            compose.onNodeWithTag("local-list").performScrollToNode(hasText(email))
             compose.onNodeWithText(email).assertIsDisplayed()
         } finally {
             scenario?.close()

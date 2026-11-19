@@ -23,7 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger
 class LocalMviNavigationTest {
  @get:Rule val compose=createComposeRule()
  private fun click(text:String) { compose.onNodeWithTag("local-list").performScrollToNode(hasText(text));compose.onNodeWithText(text).performClick() }
- private fun tab(name:String) { compose.onNodeWithTag("local-list").performScrollToIndex(0);compose.onNodeWithTag("tab-$name").performClick() }
+ private fun tab(name:String) { if(name in listOf("LEAGUES","CLUBS","PLAYERS")) compose.onNodeWithTag("local-list").performScrollToNode(hasTestTag("tab-$name"))
+  compose.onNodeWithTag("tab-$name").performClick() }
  @Test fun typedDetailsBackNavigationAndRemoteRetryKeepLocalDataUsableOffline() {
   val db=Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext<Context>(),LeagueHubDatabase::class.java).build()
   val scope=CoroutineScope(SupervisorJob()+Dispatchers.IO)
@@ -44,7 +45,7 @@ class LocalMviNavigationTest {
    } })
    lateinit var nav:NavHostController
    compose.setContent { LocalTestHost(store,sessions,db,community) { nav=it } }
-   compose.waitUntil(10_000) { !store.state.value.loading && compose.onAllNodesWithText("Reintentar conexión").fetchSemanticsNodes().isNotEmpty() }
+   compose.waitUntil(10_000) { !store.state.value.loading };compose.onNodeWithTag("local-list").performScrollToNode(hasTestTag("network-retry"));compose.waitUntil(10_000) { compose.onAllNodesWithText("Reintentar conexión").fetchSemanticsNodes().isNotEmpty() }
    tab("LEAGUES");click("Abrir Liga MVI");click("Ver plantilla de Atlas")
    compose.runOnIdle { assertEquals("a",nav.currentBackStackEntry!!.toRoute<LocalPlayersDestination>().clubId) }
    compose.onNodeWithTag("local-list").performScrollToNode(hasText("#10 Ana"));compose.onNodeWithText("#10 Ana").assertIsDisplayed()
@@ -58,9 +59,9 @@ class LocalMviNavigationTest {
    compose.runOnIdle { assertTrue(nav.currentBackStackEntry!!.destination.hasRoute<LocalBackupDestination>()) }
    click("Volver")
    compose.runOnIdle { assertTrue(nav.currentBackStackEntry!!.destination.hasRoute<LocalProfileDestination>()) }
-   tab("TABLE");compose.onNodeWithTag("local-list").performScrollToNode(hasText("1. Atlas"));compose.onNodeWithText("1. Atlas").assertIsDisplayed()
+   tab("TABLE");compose.onNodeWithTag("local-list").performScrollToNode(hasText("Atlas"));compose.onNodeWithText("Atlas").assertIsDisplayed()
    assertEquals(1,calls.get())
-   tab("HOME");compose.onNodeWithTag("network-retry").performScrollTo().performClick()
+   tab("HOME");click("Reintentar conexión")
    compose.waitUntil(10_000) { compose.onAllNodesWithText("Conexión verificada").fetchSemanticsNodes().isNotEmpty() }
    assertEquals(2,calls.get())
   } finally { scope.cancel();db.close() }

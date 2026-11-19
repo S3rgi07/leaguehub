@@ -20,6 +20,26 @@ La última tarea requiere emulador o teléfono conectado. El APK de entrega es
 `APK/LeagueHub-debug.apk`; el APK que genera Gradle está en
 `app/build/outputs/apk/debug/app-debug.apk`.
 
+## Interfaz recuperada
+
+Las pantallas principales recuperan los componentes del diseño deportivo original: avatar y
+estadísticas de perfil, portada con marcador y resultados recientes, tabla compacta y calendario
+mensual. Los catálogos de ligas, equipos y jugadores, el centro del partido y los respaldos usan
+el mismo estilo. Se conservan la navegación tipada, MVI y las operaciones de Room.
+
+El perfil muestra la cuenta activa y las estadísticas de su jugador vinculado. La forma, la racha
+y la posición de goleo se calculan con los eventos de partidos terminados; cuando no hay historial
+se muestran estados vacíos. Los filtros General/Local/Visitante y el calendario por mes/día son
+funcionales. Las opciones de edición, ubicación y compartir están en el menú de cada partido.
+
+| Inicio | Perfil | Tabla | Calendario |
+|---|---|---|---|
+| ![Inicio](docs/capturas/inicio.png) | ![Perfil](docs/capturas/perfil.png) | ![Tabla](docs/capturas/tabla.png) | ![Calendario](docs/capturas/calendario.png) |
+
+Las capturas proceden de `InterfaceRecoveryTest` con una cuenta de prueba y datos en Room en
+memoria. Esos registros no se agregan a la base de producción ni al instalar el APK. La prueba
+comprueba identidad de sesión, estadísticas, filtros de posiciones y selección de fechas.
+
 ## Servicios
 
 | Servicio | Función y condiciones |
@@ -178,7 +198,7 @@ cada modelo de teléfono: las pruebas instrumentadas se ejecutan en el emulador 
 
 ## Verificación de la entrega local
 
-La entrega alineada a la rúbrica pasó compilación y lint sin errores, 21 pruebas unitarias y 26 pruebas
+La entrega alineada a la rúbrica pasó compilación y lint sin errores, 21 pruebas unitarias y 27 pruebas
 instrumentadas en el emulador disponible, incluyendo registro/login, cambio de contraseña,
 recreación de actividad, captura por formularios, edición/eliminación, protección de dependencias,
 modo de lectura, reapertura de datos y migraciones. El APK de `APK/LeagueHub-debug.apk` se
@@ -192,3 +212,8 @@ sin impedir la gestión local. Las pruebas de red automatizadas inyectan un serv
 la aplicación normal usa el endpoint público real indicado en Servicios.
 
 La validación final del grafo tipado comprueba detalles por ID, regreso entre pantallas y acceso a Respaldos. El escenario de Internet simula primero un fallo y después una respuesta correcta al reintentar, mientras verifica que los datos locales siguen accesibles. También se comprobó que el endpoint público GET /posts/1 responde desde el entorno de desarrollo.
+
+La recuperación visual también pasó 21 pruebas unitarias y 27 instrumentadas en Pixel 8/API 37,
+con lint sin errores. Incluye la comprobación del perfil de la cuenta activa, su historial de Room,
+los filtros General/Local/Visitante y el calendario por fecha. Las capturas anteriores corresponden
+al mismo código del APK actualizado de esta entrega.
