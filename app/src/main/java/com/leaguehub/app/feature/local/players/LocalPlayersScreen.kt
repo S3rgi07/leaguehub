@@ -17,6 +17,13 @@ import com.leaguehub.app.core.components.LeagueHubCard
 fun LocalPlayersScreen(state:LocalPlayersState,onEvent:(LocalPlayersEvent)->Unit) {
  LocalFrame(state.ui,LocalSection.PLAYERS,{onEvent(LocalPlayersEvent.Common(it))},showLeague=true,showBack=false) {
  
+ if(state.selectedClub.isNotBlank()) item { HeroCard {
+  val teamName=state.clubChoices.find { it.first==state.selectedClub }?.second.orEmpty()
+  Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(16.dp)) {
+   ClubCrest(teamName,Modifier.size(80.dp))
+   Column { Text(teamName,style=MaterialTheme.typography.headlineMedium);MutedText("Plantilla y rendimiento");LeagueBadge("EQUIPO DE LA LIGA",color=MaterialTheme.colorScheme.secondary) }
+  }
+ } }
  item { SectionTitle("Jugadores",state.canCreate,"Crear jugador") { onEvent(LocalPlayersEvent.Add) } }
  if(state.clubChoices.size>1) item { ChoiceField(FormField("filterClub","Equipo",state.selectedClub,state.clubChoices)) { onEvent(LocalPlayersEvent.Filter(it)) } }
  if(state.players.isEmpty() && !state.ui.loading) item { EmptyLocal("No hay jugadores para esta selección.") }

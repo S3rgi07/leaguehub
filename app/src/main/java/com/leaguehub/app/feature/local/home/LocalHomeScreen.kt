@@ -25,7 +25,7 @@ fun LocalHomeScreen(state:LocalHomeState,onEvent:(LocalHomeEvent)->Unit) {
   Button(onClick={onEvent(LocalHomeEvent.Common(LocalEvent.Navigate(LocalSection.LEAGUES)))}) { Text("Ver ligas") }
  } }
  else if(state.leagueName!=null) {
-  item { SectionHeading(state.leagueName,"Ver posiciones",{onEvent(LocalHomeEvent.Common(LocalEvent.Navigate(LocalSection.TABLE)))}) }
+  item { SectionHeading("En la cancha","Ver posiciones",{onEvent(LocalHomeEvent.Common(LocalEvent.Navigate(LocalSection.TABLE)))}) }
   if(state.upcoming.isEmpty()) item { HeroCard { LeagueBadge("TEMPORADA",icon=R.drawable.lh_trophy);Text("La liga sigue contigo",style=MaterialTheme.typography.headlineSmall);MutedText("No hay partidos pendientes. Consulta los últimos resultados o programa la siguiente jornada.") } }
   else item { MatchCard(state.upcoming.first(),false,state.ui.busy) { onEvent(LocalHomeEvent.MatchActionSelected(state.upcoming.first().id,it)) } }
   item { HeroCard {

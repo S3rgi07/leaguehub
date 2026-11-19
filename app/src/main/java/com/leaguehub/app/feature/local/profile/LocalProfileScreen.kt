@@ -49,20 +49,23 @@ fun LocalProfileScreen(state:LocalProfileState,onEvent:(LocalProfileEvent)->Unit
   }
  } }
  item { HeroCard {
-  Row(horizontalArrangement=Arrangement.spacedBy(12.dp)) { LeagueIcon(R.drawable.lh_shield,null,tint=MaterialTheme.colorScheme.primary);Column { Text("Tu actividad en la cancha",style=MaterialTheme.typography.titleMedium);MutedText(state.player?.stats ?: "Vincula tu cuenta a una plantilla para registrar tu actividad.") } }
-  state.player?.let { MutedText(it.discipline) }
+  Row(horizontalArrangement=Arrangement.spacedBy(12.dp)) { LeagueIcon(R.drawable.lh_shield,null,tint=MaterialTheme.colorScheme.primary);Column { Text(if((state.player?.scoringStreak ?: 0)>0) "En racha" else "Tu actividad en la cancha",style=MaterialTheme.typography.titleMedium);MutedText(if((state.player?.scoringStreak ?: 0)>0) "Marcaste en ${state.player?.scoringStreak} partidos consecutivos" else if(state.player!=null) "Estadísticas de tus partidos registrados" else "Vincula tu cuenta a una plantilla para registrar tu actividad.") } }
+  state.player?.let { MutedText(it.stats);it.goalRank?.let { rank->LeagueBadge("TOP $rank GOLEO",color=MaterialTheme.colorScheme.tertiary,icon=R.drawable.lh_trophy) } }
  } }
  item { Text("Equipos seguidos",style=MaterialTheme.typography.titleLarge)
   if(state.followed.isEmpty()) Text("Todavía no sigues equipos.")
   state.followed.forEach { row -> TextButton(onClick={onEvent(LocalProfileEvent.OpenClub(row.id))}) { Text(row.name) } }
  }
- item {
+ item { SectionHeading("Mi cuenta") }
+ item { LeagueHubCard(Modifier.fillMaxWidth()) {
+  MutedText(state.ui.email)
+  Spacer(Modifier.height(8.dp))
   Button(onClick={onEvent(LocalProfileEvent.EditName)}) { Text("Editar mi nombre") }
   TextButton(onClick={onEvent(LocalProfileEvent.Password)}) { Text("Cambiar contraseña") }
   TextButton(onClick={onEvent(LocalProfileEvent.Common(LocalEvent.ChangeAppearance))}) { Text("Apariencia: ${state.ui.appearance}") }
   TextButton(onClick={onEvent(LocalProfileEvent.Common(LocalEvent.ChangeMode))}) { Text(if(state.ui.organizer) "Cambiar a jugador" else "Cambiar a organizador") }
   OutlinedButton(onClick={onEvent(LocalProfileEvent.Common(LocalEvent.RequestLogout))},enabled=!state.ui.busy) { Text("Cerrar sesión") }
- }
+ } }
  if(state.ui.organizer) item { Button(onClick={onEvent(LocalProfileEvent.Common(LocalEvent.OpenBackups))},modifier=Modifier.testTag("open-backups")) { Text("Respaldos") } }
 
  }

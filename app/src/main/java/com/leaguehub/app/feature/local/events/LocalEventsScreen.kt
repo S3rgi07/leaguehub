@@ -15,7 +15,7 @@ import com.leaguehub.app.core.components.LeagueHubCard
 
 @Composable
 fun LocalEventsScreen(state:LocalEventsState,onEvent:(LocalEventsEvent)->Unit) {
- LocalFrame(state.ui,LocalSection.MATCHES,{onEvent(LocalEventsEvent.Common(it))},showLeague=false,showBack=true) {
+ LocalFrame(state.ui,LocalSection.MATCHES,{onEvent(LocalEventsEvent.Common(it))},showLeague=false,showBack=true,title="Centro del partido") {
  
  val match=state.match
  if(match==null && !state.ui.loading) item { EmptyLocal("Partido no encontrado.") }

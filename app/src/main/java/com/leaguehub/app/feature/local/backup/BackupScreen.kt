@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 @Composable
 fun BackupScreen(state:BackupState,onEvent:(BackupEvent)->Unit) {
- LocalFrame(state.ui,LocalSection.PROFILE,{onEvent(BackupEvent.Common(it))},showLeague=false,showBack=true) {
+ LocalFrame(state.ui,LocalSection.PROFILE,{onEvent(BackupEvent.Common(it))},showLeague=false,showBack=true,title="Respaldos") {
   item { HeroCard { LeagueIcon(R.drawable.lh_shield,null,tint=MaterialTheme.colorScheme.primary);LeagueBadge("TUS DATOS, CONTIGO");Text("Respaldos",style=MaterialTheme.typography.headlineMedium)
    Text("Incluyen tus ligas y sus datos deportivos. No incluyen cuentas ni contraseñas.")
    OutlinedButton(onClick={onEvent(BackupEvent.ChooseExport)},enabled=!state.busy && state.ui.organizer) { Text("Exportar respaldo") }

@@ -58,8 +58,8 @@ class LocalHubFlowTest {
             field("minute","15");save()
             compose.waitUntil(5_000) { vm.state.value.data.events.size==1 }
             tab("TABLE")
-            compose.onNodeWithTag("local-list").performScrollToNode(hasText("1. Atlas"))
-            compose.onNodeWithText("1. Atlas").assertIsDisplayed()
+            compose.onNodeWithTag("local-list").performScrollToNode(hasText("Atlas"))
+            compose.onNodeWithText("Atlas").assertIsDisplayed()
             assertEquals(3,vm.state.value.data.table(vm.state.value.leagueId!!).first().points)
             tab("PROFILE")
             compose.onNodeWithText("Ana Local").assertIsDisplayed()

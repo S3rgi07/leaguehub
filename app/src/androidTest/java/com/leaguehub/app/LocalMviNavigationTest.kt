@@ -59,7 +59,7 @@ class LocalMviNavigationTest {
    compose.runOnIdle { assertTrue(nav.currentBackStackEntry!!.destination.hasRoute<LocalBackupDestination>()) }
    click("Volver")
    compose.runOnIdle { assertTrue(nav.currentBackStackEntry!!.destination.hasRoute<LocalProfileDestination>()) }
-   tab("TABLE");compose.onNodeWithTag("local-list").performScrollToNode(hasText("1. Atlas"));compose.onNodeWithText("1. Atlas").assertIsDisplayed()
+   tab("TABLE");compose.onNodeWithTag("local-list").performScrollToNode(hasText("Atlas"));compose.onNodeWithText("Atlas").assertIsDisplayed()
    assertEquals(1,calls.get())
    tab("HOME");click("Reintentar conexión")
    compose.waitUntil(10_000) { compose.onAllNodesWithText("Conexión verificada").fetchSemanticsNodes().isNotEmpty() }
