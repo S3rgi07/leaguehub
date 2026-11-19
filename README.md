@@ -89,3 +89,25 @@ informa que está pendiente, sin afirmar que se envió un código.
 ```
 
 La segunda línea requiere un emulador o dispositivo conectado.
+
+## Avance en FeatureFinal
+
+Se inició la fase local definitiva. Room v3 incorpora `leagues`, `clubs`, `players` y
+`fixtures`, con relaciones y migración desde las versiones anteriores. CompetitionRepository
+valida propietario, equipos de la misma liga, dorsal, fecha y marcador. Esta base aún no está
+conectada a los formularios ni sustituye los fixtures de las pantallas.
+
+Para continuar en otra máquina:
+
+1. Clonar el repositorio y cambiar a `FeatureFinal`; actualizar con `git pull --ff-only`.
+2. Configurar JDK 25 y Android SDK 37; `local.properties` es específico de cada máquina.
+3. Ejecutar las verificaciones de este README.
+4. Siguiente bloque: formularios MVI de ligas y equipos, accesibles desde el organizador;
+   después jugadores y partidos. Usar CompetitionRepository y comprobar el propietario desde
+   la sesión; evitar introducir otro catálogo paralelo en memoria.
+5. Después conectar perfil, calendario y tabla con Room; calcular posiciones desde resultados,
+   añadir eventos y estadísticas, y completar edición/eliminación con protección de relaciones.
+
+Las cuentas y datos locales del emulador no viajan con Git. El APK en `APK/` corresponde al
+último bloque de perfil validado; para probar el código más reciente generar el APK con Gradle.
+Los cambios personales de Android Studio que permanezcan fuera de los commits deben conservarse.

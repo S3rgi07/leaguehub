@@ -37,6 +37,8 @@ class LeagueHubApplication : Application() {
 
     val authRepository by lazy { com.leaguehub.app.data.repository.AuthRepository(database, userSessionRepository) }
 
+    val competitionRepository by lazy { com.leaguehub.app.data.repository.CompetitionRepository(database) }
+
     val communityRepository: CommunityRepository by lazy {
         CommunityRepository(NetworkModule.api)
     }
