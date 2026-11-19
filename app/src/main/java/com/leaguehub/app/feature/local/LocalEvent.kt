@@ -1,5 +1,5 @@
 package com.leaguehub.app.feature.local
-enum class LocalPage { SETTINGS, ALERTS, EXPLORE, DASHBOARD }
+enum class LocalPage { CLOUD, SETTINGS, ALERTS, EXPLORE, DASHBOARD }
 sealed interface LocalEvent {
     data class OpenPage(val page:LocalPage):LocalEvent
     data class Navigate(val section: LocalSection): LocalEvent

@@ -22,8 +22,10 @@ import com.leaguehub.app.feature.local.leaguedetail.LeagueDetailRoute
 import com.leaguehub.app.feature.local.teamdetail.TeamDetailRoute
 import com.leaguehub.app.feature.local.matchdetail.MatchDetailRoute
 import com.leaguehub.app.feature.local.center.CenterRoute
+import com.leaguehub.app.feature.local.cloud.CloudRoute
 fun NavGraphBuilder.localNavigation(nav:NavHostController,deps:LocalDependencies) {
  navigation<LocalHubDestination>(startDestination=LocalHomeDestination) {
+  composable<CloudSyncDestination> { entry -> CloudRoute(nav,deps,entry) }
   composable<LocalHomeDestination> { entry -> LocalHomeRoute(nav,deps,entry) }
   composable<LocalLeaguesDestination> { entry -> LeaguesRoute(nav,deps,entry) }
   composable<LocalClubsDestination> { entry -> ClubsRoute(nav,deps,entry) }

@@ -6,6 +6,9 @@ plugins {
     alias(libs.plugins.androidx.room)
 }
 
+val firebaseConfigured = file("google-services.json").isFile
+if (firebaseConfigured) apply(plugin = "com.google.gms.google-services")
+
 android {
     namespace = "com.leaguehub.app"
     compileSdk {
@@ -16,10 +19,11 @@ android {
         applicationId = "com.leaguehub.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.2-firebase"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.leaguehub.app.LeagueHubTestRunner"
+        buildConfigField("boolean", "FIREBASE_CONFIGURED", firebaseConfigured.toString())
     }
 
     buildTypes {
@@ -35,6 +39,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -43,6 +48,9 @@ room {
 }
 
 dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)

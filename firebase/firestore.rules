@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function signedIn() { return request.auth != null; }
+  match /users/{uid} {
+   allow read: if signedIn() && request.auth.uid == uid;
+   allow create, update: if signedIn() && request.auth.uid == uid
+    && request.resource.data.keys().hasOnly(['canonicalId','name','role','selectedLeagueId','onboardingCompleted','updatedAt'])
+    && request.resource.data.canonicalId == uid
+    && request.resource.data.name is string && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 250
+    && request.resource.data.role in [null, 'PLAYER', 'ORGANIZER']
+    && (request.resource.data.selectedLeagueId == null || (request.resource.data.selectedLeagueId is string && request.resource.data.selectedLeagueId.size() <= 128))
+    && request.resource.data.onboardingCompleted is bool
+    && request.resource.data.updatedAt == request.time;
+   allow delete: if false;
+  }
+  match /leagues/{leagueId} {
+   function validLeague() {
+    return request.resource.data.keys().hasOnly(['ownerUid','ownerLocalId','revision','payload','deleted','updatedAt'])
+     && leagueId.size() <= 128
+     && request.resource.data.ownerUid == request.auth.uid
+     && request.resource.data.ownerLocalId == request.auth.uid
+     && request.resource.data.revision is int
+     && request.resource.data.payload is string && request.resource.data.payload.size() <= 750000
+     && request.resource.data.deleted is bool
+     && (request.resource.data.deleted || request.resource.data.payload.size() > 0)
+     && request.resource.data.updatedAt == request.time;
+   }
+   // Sports leagues are visible to registered users; credentials and private profile are not.
+   allow read: if signedIn();
+   allow create: if signedIn() && validLeague() && request.resource.data.revision == 1;
+   allow update: if signedIn() && resource.data.ownerUid == request.auth.uid && validLeague()
+    && request.resource.data.revision == resource.data.revision + 1
+    && request.resource.data.ownerUid == resource.data.ownerUid
+    && request.resource.data.ownerLocalId == resource.data.ownerLocalId;
+   // Preserve a versioned tombstone so a disconnected phone cannot resurrect deleted data.
+   allow delete: if false;
+  }
+  match /{document=**} { allow read, write: if false; }
+ }
+}
