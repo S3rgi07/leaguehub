@@ -111,3 +111,13 @@ data class PublishedResultDestination(
 )
 @kotlinx.serialization.Serializable
 data object LocalHubDestination
+
+@Serializable data object LocalHomeDestination
+@Serializable data object LocalLeaguesDestination
+@Serializable data object LocalClubsDestination
+@Serializable data class LocalPlayersDestination(val clubId:String?=null)
+@Serializable data object LocalMatchesDestination
+@Serializable data class LocalEventsDestination(val matchId:String)
+@Serializable data object LocalStandingsDestination
+@Serializable data object LocalProfileDestination
+@Serializable data object LocalBackupDestination

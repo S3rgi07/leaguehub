@@ -6,5 +6,8 @@ sealed interface RoleSelectionEvent {
         val role: UserRole
     ) : RoleSelectionEvent
 
+    data object ConfigureLeagueClicked : RoleSelectionEvent
+    data object BackClicked : RoleSelectionEvent
+
     data object ContinueClicked : RoleSelectionEvent
 }

@@ -2,7 +2,8 @@ package com.leaguehub.app.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
+import com.leaguehub.app.navigation.graphs.localNavigation
+import com.leaguehub.app.feature.local.rememberLocalDependencies
 import androidx.navigation.compose.rememberNavController
 import com.leaguehub.app.feature.matches.model.MatchUiModel
 import com.leaguehub.app.navigation.graphs.authNavigation
@@ -15,6 +16,7 @@ fun LeagueHubNavHost(
     onShare: (String) -> Unit
 ) {
     val navController = rememberNavController()
+    val dependencies = rememberLocalDependencies()
 
     NavHost(
         navController = navController,
@@ -22,11 +24,7 @@ fun LeagueHubNavHost(
     ) {
         authNavigation(navController)
 
-        composable<LocalHubDestination> {
-            com.leaguehub.app.feature.local.LocalHubRoute(onLogout = {
-                navController.navigate(LoginDestination) { popUpTo<LocalHubDestination> { inclusive = true }; launchSingleTop = true }
-            })
-        }
+        localNavigation(navController,dependencies)
 
 
     }

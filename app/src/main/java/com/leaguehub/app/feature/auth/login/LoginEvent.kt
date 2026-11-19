@@ -12,5 +12,9 @@ sealed interface LoginEvent {
 
     data object TogglePasswordVisibility : LoginEvent
 
+    data object ForgotPasswordClicked : LoginEvent
+    data object CreateAccountClicked : LoginEvent
+    data object NavigationHandled : LoginEvent
+
     data object LoginClicked : LoginEvent
 }

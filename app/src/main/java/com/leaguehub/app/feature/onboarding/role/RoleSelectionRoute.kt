@@ -38,6 +38,8 @@ fun RoleSelectionRoute(
         }
     }
 
+    LaunchedEffect(state.isCancelled) { if(state.isCancelled) onBack() }
+
     RoleSelectionScreen(
         selectedRole = state.selectedRole,
 
@@ -53,7 +55,7 @@ fun RoleSelectionRoute(
             )
         },
 
-        onBackClick = onBack,
-        onConfigureLeagueClick = onConfigureLeague
+        onBackClick = { viewModel.onEvent(RoleSelectionEvent.BackClicked) },
+        onConfigureLeagueClick = { viewModel.onEvent(RoleSelectionEvent.ConfigureLeagueClicked) }
     )
 }

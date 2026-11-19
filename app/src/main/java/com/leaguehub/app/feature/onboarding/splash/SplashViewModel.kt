@@ -12,7 +12,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class SplashViewModel(
-    private val sessionRepository: UserSessionRepository
+    private val sessionRepository: UserSessionRepository,
+    private val accounts: com.leaguehub.app.data.local.UserAccountDao
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SplashState())
@@ -34,14 +35,15 @@ class SplashViewModel(
 
         viewModelScope.launch {
             sessionRepository.restoreCompleted.first { it }
-            delay(800)
-
-            _state.update {
-                it.copy(
-                    isLoading = false,
-                    isReady = true
-                )
-            }
+            val session=sessionRepository.session.value
+            var message:String?=null
+            val target=if(!session.isAuthenticated) SplashTarget.ONBOARDING
+                else if(session.userId?.let { accounts.findById(it) }==null) {
+                    sessionRepository.logoutAndWait()
+                    message="La sesión anterior era de demostración. Crea una cuenta local para continuar."
+                    SplashTarget.ONBOARDING
+                } else if(session.role==null) SplashTarget.ROLE else SplashTarget.LOCAL
+            _state.value=SplashState(isLoading=false,isReady=true,target=target,message=message)
         }
     }
 }

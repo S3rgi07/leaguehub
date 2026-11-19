@@ -1,6 +1,7 @@
 package com.leaguehub.app.feature.auth.register
 
 data class RegisterState(
+    val isCancelled: Boolean = false,
     val name: String = "",
     val email: String = "",
     val password: String = "",

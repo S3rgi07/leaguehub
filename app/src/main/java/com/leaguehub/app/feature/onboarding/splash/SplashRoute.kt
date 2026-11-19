@@ -12,12 +12,12 @@ import com.leaguehub.app.LeagueHubApplication
 
 @Composable
 fun SplashRoute(
-    onFinished: () -> Unit
+    onFinished: (SplashTarget) -> Unit
 ) {
     val application = LocalContext.current.applicationContext as LeagueHubApplication
     val viewModel: SplashViewModel = viewModel(
         factory = viewModelFactory {
-            initializer { SplashViewModel(application.userSessionRepository) }
+            initializer { SplashViewModel(application.userSessionRepository,application.database.userAccountDao()) }
         }
     )
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -28,7 +28,8 @@ fun SplashRoute(
 
     LaunchedEffect(state.isReady) {
         if (state.isReady) {
-            onFinished()
+            state.message?.let { android.widget.Toast.makeText(application,it,android.widget.Toast.LENGTH_LONG).show() }
+            state.target?.let(onFinished)
         }
     }
 

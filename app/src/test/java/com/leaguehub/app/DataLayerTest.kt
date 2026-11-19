@@ -37,4 +37,12 @@ class DataLayerTest {
 
         assertEquals("Liga actualizada", result.getOrThrow())
     }
+    @Test(expected = kotlinx.coroutines.CancellationException::class)
+    fun cancellingTheHttpCallDoesNotBecomeAnOfflineError() = runBlocking {
+        val api = object : LeagueHubApi {
+            override suspend fun getCommunityAnnouncement(): CommunityAnnouncementDto = throw kotlinx.coroutines.CancellationException("cancelled")
+        }
+        CommunityRepository(api).loadAnnouncement()
+        Unit
+    }
 }

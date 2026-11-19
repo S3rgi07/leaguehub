@@ -20,5 +20,7 @@ sealed interface RegisterEvent {
 
     data object TogglePasswordVisibility : RegisterEvent
 
+    data object BackClicked : RegisterEvent
+
     data object ContinueClicked : RegisterEvent
 }
