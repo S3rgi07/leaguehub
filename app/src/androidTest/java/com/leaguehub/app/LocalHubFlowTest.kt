@@ -68,7 +68,7 @@ class LocalHubFlowTest {
             tab("MATCHES");click("Ver eventos")
             val event=vm.state.value.data.events.single()
             compose.runOnIdle { vm.delete("event",event.id,"Gol") }
-            compose.onNodeWithText("Eliminar",useUnmergedTree=true).performClick()
+            compose.onNodeWithTag("delete-confirm").performClick()
             compose.waitUntil(5_000) { vm.state.value.data.events.isEmpty() }
             click("Corregir resultado");field("homeScore","0");field("awayScore","2");save()
             compose.waitUntil(5_000) { vm.state.value.data.table(vm.state.value.leagueId!!).first().club.name=="Bravos" }
@@ -96,7 +96,7 @@ class LocalHubFlowTest {
             tab("LEAGUES");click("Editar liga");field("name","Liga corregida");save()
             compose.waitUntil(5_000) { vm.state.value.league?.name=="Liga corregida" }
             tab("CLUBS");click("Eliminar")
-            compose.onAllNodesWithText("Eliminar").onLast().performClick()
+            compose.onNodeWithTag("delete-confirm").performClick()
             compose.waitUntil(5_000) { vm.state.value.error!=null }
             assertEquals(1,vm.state.value.clubs.size)
             compose.onNodeWithText("Cancelar").performClick()
@@ -111,11 +111,11 @@ class LocalHubFlowTest {
             compose.onNodeWithText("Editar").assertDoesNotExist()
             tab("PROFILE");click("Cambiar a organizador")
             compose.waitUntil(5_000) { vm.state.value.session.role==SessionRole.ORGANIZER }
-            tab("PLAYERS");click("Eliminar");compose.onAllNodesWithText("Eliminar").onLast().performClick()
+            tab("PLAYERS");click("Eliminar");compose.onNodeWithTag("delete-confirm").performClick()
             compose.waitUntil(5_000) { vm.state.value.players.isEmpty() }
-            tab("CLUBS");click("Eliminar");compose.onAllNodesWithText("Eliminar").onLast().performClick()
+            tab("CLUBS");click("Eliminar");compose.onNodeWithTag("delete-confirm").performClick()
             compose.waitUntil(5_000) { vm.state.value.clubs.isEmpty() }
-            tab("LEAGUES");click("Eliminar liga");compose.onAllNodesWithText("Eliminar").onLast().performClick()
+            tab("LEAGUES");click("Eliminar liga");compose.onNodeWithTag("delete-confirm").performClick()
             compose.waitUntil(5_000) { vm.state.value.data.leagues.isEmpty() }
         } finally { scope.cancel();db.close() }
     }}
