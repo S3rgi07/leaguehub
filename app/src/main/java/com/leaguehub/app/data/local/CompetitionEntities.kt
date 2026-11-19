@@ -22,6 +22,17 @@ data class FixtureEntity(@PrimaryKey val id: String, val leagueId: String, val h
 
 @Dao
 interface CompetitionDao {
+    @Query("SELECT * FROM leagues ORDER BY name") fun allLeagues(): Flow<List<LeagueEntity>>
+    @Query("SELECT * FROM clubs ORDER BY name") fun allClubs(): Flow<List<ClubEntity>>
+    @Query("SELECT * FROM players ORDER BY number, name") fun allPlayers(): Flow<List<PlayerEntity>>
+    @Query("SELECT * FROM fixtures ORDER BY kickoff") fun allFixtures(): Flow<List<FixtureEntity>>
+    @Query("SELECT * FROM match_events ORDER BY minute, id") fun allEvents(): Flow<List<MatchEventEntity>>
+    @Query("SELECT * FROM match_events WHERE fixtureId = :id") suspend fun events(id: String): List<MatchEventEntity>
+    @Query("SELECT * FROM match_events WHERE id = :id") suspend fun event(id: String): MatchEventEntity?
+    @Query("SELECT COUNT(*) FROM match_events WHERE playerId = :id") suspend fun playerEventCount(id: String): Int
+    @Query("SELECT COUNT(*) FROM players WHERE clubId = :clubId AND number = :number AND id != :exceptId") suspend fun dorsalCount(clubId: String, number: Int, exceptId: String): Int
+    @Upsert suspend fun save(event: MatchEventEntity)
+    @Delete suspend fun delete(event: MatchEventEntity)
     @Query("SELECT * FROM leagues WHERE ownerId = :ownerId ORDER BY name") fun observeLeagues(ownerId: String): Flow<List<LeagueEntity>>
     @Query("SELECT * FROM clubs WHERE leagueId = :leagueId ORDER BY name") fun observeClubs(leagueId: String): Flow<List<ClubEntity>>
     @Query("SELECT * FROM players WHERE clubId = :clubId ORDER BY number") fun observePlayers(clubId: String): Flow<List<PlayerEntity>>

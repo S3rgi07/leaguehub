@@ -130,7 +130,7 @@ class AccountPersistenceTest {
             old.version = 1
         }
         val migrated = Room.databaseBuilder(context, LeagueHubDatabase::class.java, name)
-            .addMigrations(LeagueHubDatabase.MIGRATION_1_2, LeagueHubDatabase.MIGRATION_2_3).build()
+            .addMigrations(LeagueHubDatabase.MIGRATION_1_2, LeagueHubDatabase.MIGRATION_2_3, LeagueHubDatabase.MIGRATION_3_4).build()
         try {
             val session = migrated.userSessionDao().observeSession().first()!!
             assertEquals("Usuario anterior", session.userName)

@@ -8,8 +8,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [UserSessionEntity::class, UserAccountEntity::class, UserDataEntity::class, LeagueEntity::class, ClubEntity::class, PlayerEntity::class, FixtureEntity::class],
-    version = 3,
+    entities = [UserSessionEntity::class, UserAccountEntity::class, UserDataEntity::class, LeagueEntity::class, ClubEntity::class, PlayerEntity::class, FixtureEntity::class, MatchEventEntity::class],
+    version = 4,
     exportSchema = true
 )
 abstract class LeagueHubDatabase : RoomDatabase() {
@@ -40,6 +40,13 @@ abstract class LeagueHubDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_fixtures_awayId ON fixtures(awayId)")
             }
         }
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS match_events (id TEXT NOT NULL PRIMARY KEY, fixtureId TEXT NOT NULL, playerId TEXT NOT NULL, kind TEXT NOT NULL, minute INTEGER NOT NULL, minutesPlayed INTEGER NOT NULL, rating REAL, FOREIGN KEY(fixtureId) REFERENCES fixtures(id) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(playerId) REFERENCES players(id) ON UPDATE NO ACTION ON DELETE RESTRICT)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_match_events_fixtureId ON match_events(fixtureId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_match_events_playerId ON match_events(playerId)")
+            }
+        }
         @Volatile private var instance: LeagueHubDatabase? = null
 
         fun getInstance(context: Context): LeagueHubDatabase =
@@ -48,7 +55,7 @@ abstract class LeagueHubDatabase : RoomDatabase() {
                     context.applicationContext,
                     LeagueHubDatabase::class.java,
                     "leaguehub.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
             }
     }
 }

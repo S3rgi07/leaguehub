@@ -11,6 +11,26 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class AuthRepository(private val database: LeagueHubDatabase, private val sessionRepository: UserSessionRepository) {
+    suspend fun updateName(name: String) = withContext(Dispatchers.IO) {
+        require(name.trim().length >= 3) { "Ingresa tu nombre completo" }
+        sessionRepository.authenticate {
+            val session = sessionRepository.session.value
+            val id = requireNotNull(session.userId) { "Inicia sesión de nuevo" }
+            database.userAccountDao().updateName(id, name.trim())
+            session.copy(userName = name.trim())
+        }
+    }
+    suspend fun changePassword(current: String, replacement: String) = withContext(Dispatchers.IO) {
+        require(replacement.length >= 8 && replacement.any(Char::isUpperCase) && replacement.any(Char::isDigit)) { "Usa al menos 8 caracteres, una mayúscula y un número" }
+        sessionRepository.authenticate {
+            val session = sessionRepository.session.value
+            val account = requireNotNull(session.userId?.let { database.userAccountDao().findById(it) }) { "Esta sesión antigua requiere crear una cuenta" }
+            require(PasswordHasher.matches(current, account.passwordSalt, account.passwordHash)) { "La contraseña actual es incorrecta" }
+            val salt = PasswordHasher.newSalt()
+            database.userAccountDao().updatePassword(account.userId, PasswordHasher.hash(replacement, salt), salt)
+            session
+        }
+    }
     suspend fun register(name: String, email: String, password: String) = withContext(Dispatchers.IO) {
         val normalizedEmail = email.trim().lowercase(Locale.ROOT)
         val salt = PasswordHasher.newSalt()
