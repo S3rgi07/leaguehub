@@ -1,6 +1,8 @@
 package com.leaguehub.app.feature.organizer.validation.ocr
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import com.leaguehub.app.feature.organizer.MatchWorkflowRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,6 +14,10 @@ class OcrReviewViewModel(
 ) : ViewModel() {
     private val _state = MutableStateFlow(OcrReviewState(repository.state.value.ocrReview))
     val state: StateFlow<OcrReviewState> = _state.asStateFlow()
+
+    init { if (repository.isPersistent) viewModelScope.launch { repository.state.collect { current ->
+        _state.update { it.copy(data = current.ocrReview) }
+    } } }
 
     fun onEvent(event: OcrReviewEvent) {
         when (event) {

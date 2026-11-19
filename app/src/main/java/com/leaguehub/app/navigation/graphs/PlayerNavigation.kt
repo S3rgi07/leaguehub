@@ -5,7 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.leaguehub.app.core.components.PlayerDestination
-import com.leaguehub.app.data.fake.sofia
+
 import com.leaguehub.app.data.fake.universityLeague
 import com.leaguehub.app.feature.explore.ExploreCategory
 import com.leaguehub.app.feature.explore.ExploreRoute
@@ -44,12 +44,12 @@ fun NavGraphBuilder.playerNavigation(
             PlayerDestination.HOME -> HomeDestination
             PlayerDestination.STANDINGS -> StandingsDestination
             PlayerDestination.CALENDAR -> CalendarDestination
-            PlayerDestination.PROFILE -> PlayerProfileDestination(sofia.id)
+            PlayerDestination.PROFILE -> PlayerProfileDestination()
         }
         navController.navigate(route) {
             popUpTo<HomeDestination> { saveState = true }
             launchSingleTop = true
-            restoreState = true
+            restoreState = destination == PlayerDestination.STANDINGS || destination == PlayerDestination.CALENDAR
         }
     }
 
@@ -140,7 +140,7 @@ fun NavGraphBuilder.playerNavigation(
     composable<SettingsDestination> {
         SettingsRoute(
             onBack = { navController.popBackStack() },
-            onProfileClick = { navController.navigate(PlayerProfileDestination(sofia.id)) },
+            onProfileClick = { navController.navigate(PlayerProfileDestination()) },
             onNotificationsClick = { navController.navigate(NotificationsDestination) },
             onOrganizerClick = { navController.navigate(OrganizerDashboardDestination) },
             onExploreClick = { navController.navigate(ExploreDestination) },

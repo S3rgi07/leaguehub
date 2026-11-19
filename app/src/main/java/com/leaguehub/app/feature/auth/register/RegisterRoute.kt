@@ -23,7 +23,7 @@ fun RegisterRoute(
         factory = viewModelFactory {
             initializer {
                 RegisterViewModel(
-                    sessionRepository = application.userSessionRepository
+                    authRepository = application.authRepository
                 )
             }
         }

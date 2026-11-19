@@ -4,8 +4,8 @@ package com.leaguehub.app.feature.auth.login
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.leaguehub.app.data.repository.UserSessionRepository
-import kotlinx.coroutines.delay
+
+
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class LoginViewModel(
-    private val sessionRepository: UserSessionRepository
+    private val authRepository: com.leaguehub.app.data.repository.AuthRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginState())
@@ -93,31 +93,15 @@ class LoginViewModel(
                 )
             }
 
-            // Simulación de autenticación
-            delay(1000)
-
-            val email = currentState.email.trim()
-
-            val success =
-                email.equals(
-                    "sofia@leaguehub.app",
-                    ignoreCase = true
-                ) &&
-                        currentState.password == "LeagueHub123"
-
-            if (success) {
-                sessionRepository.login(
-                    userId = "user_sofia_001",
-                    userName = "Sofía Méndez",
-                    email = email
-                )
-
-                android.util.Log.d(
-                    "LeagueHubSession",
-                    "Usuario autenticado: ${sessionRepository.session.value.email}"
-                )
+            val result = try {
+                authRepository.login(currentState.email, currentState.password)
+                Result.success(Unit)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Result.failure<Unit>(error)
             }
-
+            val success = result.isSuccess
             _state.update {
                 it.copy(
                     isLoading = false,
@@ -125,7 +109,7 @@ class LoginViewModel(
                     errorMessage = if (success) {
                         null
                     } else {
-                        "Correo o contraseña incorrectos"
+                        result.exceptionOrNull()?.let { if (it is IllegalArgumentException) it.message else null } ?: "No se pudo iniciar sesión. Inténtalo de nuevo."
                     }
                 )
             }

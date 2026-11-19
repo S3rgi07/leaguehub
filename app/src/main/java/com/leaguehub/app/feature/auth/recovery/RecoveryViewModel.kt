@@ -74,7 +74,7 @@ class RecoveryViewModel : ViewModel() {
             _state.update {
                 it.copy(
                     isLoading = false,
-                    codeSent = true
+                    codeSent = false, errorMessage = "La recuperación por correo aún no está disponible: esta versión guarda las cuentas solo en este dispositivo."
                 )
             }
         }

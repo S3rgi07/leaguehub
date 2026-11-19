@@ -7,7 +7,7 @@ import com.leaguehub.app.feature.matches.model.MatchUiModel
 import com.leaguehub.app.feature.profile.model.PlayerUiModel
 
 data class HomeState(
-    val player: PlayerUiModel = sofia,
+    val player: PlayerUiModel = PlayerUiModel("", "Mi perfil", 0, "Sin posición", "", 0, 0, 0),
     val league: LeagueUiModel = universityLeague,
     val nextMatch: MatchUiModel? = upcomingFalconsVsTitans,
     val recentResults: List<MatchUiModel> = fakeRecentResults,

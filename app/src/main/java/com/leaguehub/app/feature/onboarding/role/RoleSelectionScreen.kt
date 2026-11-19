@@ -1,5 +1,11 @@
 package com.leaguehub.app.feature.onboarding.role
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -43,6 +49,9 @@ fun RoleSelectionScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .padding(WindowInsets.safeDrawing.asPaddingValues())
+            .imePadding()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 24.dp)
     ) {
 
@@ -118,7 +127,7 @@ fun RoleSelectionScreen(
 
         InfoCard()
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(24.dp))
 
         LeagueHubButton(
             text = if (selectedRole == UserRole.PLAYER) {

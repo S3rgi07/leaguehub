@@ -42,12 +42,26 @@ data class MatchWorkflowState(
         )
 }
 
-class MatchWorkflowRepository {
+class MatchWorkflowRepository(private val storage: com.leaguehub.app.data.repository.UserScopedState<MatchWorkflowState>? = null) {
+    val isPersistent: Boolean get() = storage != null
     private val _state = MutableStateFlow(MatchWorkflowState())
-    val state: StateFlow<MatchWorkflowState> = _state.asStateFlow()
+    val state: StateFlow<MatchWorkflowState> = storage?.state ?: _state.asStateFlow()
+    private fun change(transform: (MatchWorkflowState) -> MatchWorkflowState) {
+        storage?.update(transform) ?: _state.update(transform)
+    }
+    fun editDetectedEvent(id: String) = change { current -> current.copy(detectedEvents = current.detectedEvents.map {
+        if (it.id == id) it.copy(title = "${it.title} · revisado", needsReview = false) else it
+    }) }
+    fun editLiveEvent(id: String) = change { current -> current.copy(liveEvents = current.liveEvents.map {
+        if (it.id == id) it.copy(title = "${it.title} · editado") else it
+    }) }
+
+    fun completeRoster(teamId: String) = change { current -> current.copy(management = current.management.copy(
+        rosters = current.management.rosters.map { if (it.team.id == teamId) it.copy(starters = 11, missing = 0) else it }
+    )) }
 
     fun updateScore(homeScore: Int? = null, awayScore: Int? = null) {
-        _state.update {
+        change {
             it.copy(
                 homeScore = (homeScore ?: it.homeScore).coerceAtLeast(0),
                 awayScore = (awayScore ?: it.awayScore).coerceAtLeast(0)
@@ -55,10 +69,10 @@ class MatchWorkflowRepository {
         }
     }
 
-    fun retryScan() = _state.update { it.copy(scanStatus = ScanStatus.DETECTED) }
-    fun updateReferee(value: String) = _state.update { it.copy(referee = value) }
+    fun retryScan() = change { it.copy(scanStatus = ScanStatus.DETECTED) }
+    fun updateReferee(value: String) = change { it.copy(referee = value) }
 
-    fun addDetectedEvent() = _state.update { current ->
+    fun addDetectedEvent() = change { current ->
         val nextId = "manual_${current.detectedEvents.size + 1}"
         current.copy(
             detectedEvents = current.detectedEvents + DetectedEventUiModel(
@@ -72,7 +86,7 @@ class MatchWorkflowRepository {
     }
 
     fun addLiveEvent(title: String, description: String, homeGoal: Boolean = false) {
-        _state.update { current ->
+        change { current ->
             current.copy(
                 homeScore = current.homeScore + if (homeGoal) 1 else 0,
                 liveEvents = listOf(
@@ -87,6 +101,6 @@ class MatchWorkflowRepository {
         }
     }
 
-    fun togglePaused() = _state.update { it.copy(isPaused = !it.isPaused) }
-    fun publish() = _state.update { it.copy(isPublished = true, isPaused = true) }
+    fun togglePaused() = change { it.copy(isPaused = !it.isPaused) }
+    fun publish() = change { it.copy(isPublished = true, isPaused = true) }
 }

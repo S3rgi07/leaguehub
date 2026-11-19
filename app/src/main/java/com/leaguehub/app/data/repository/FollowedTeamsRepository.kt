@@ -7,20 +7,24 @@ import kotlinx.coroutines.flow.update
 
 /** Shared source of truth for teams followed by the current user. */
 class FollowedTeamsRepository(
-    initialTeamIds: Set<String> = setOf("falcons")
+    initialTeamIds: Set<String> = emptySet(),
+    private val storage: UserScopedState<Set<String>>? = null
 ) {
     private val _followedTeamIds = MutableStateFlow(initialTeamIds)
-    val followedTeamIds: StateFlow<Set<String>> = _followedTeamIds.asStateFlow()
+    val followedTeamIds: StateFlow<Set<String>> = storage?.state ?: _followedTeamIds.asStateFlow()
+    private fun change(transform: (Set<String>) -> Set<String>) {
+        storage?.update(transform) ?: _followedTeamIds.update(transform)
+    }
 
     fun toggle(teamId: String) {
-        _followedTeamIds.update { current ->
+        change { current ->
             if (teamId in current) current - teamId else current + teamId
         }
     }
 
-    fun isFollowing(teamId: String): Boolean = teamId in _followedTeamIds.value
+    fun isFollowing(teamId: String): Boolean = teamId in followedTeamIds.value
 
     fun clear() {
-        _followedTeamIds.value = emptySet()
+        change { emptySet() }
     }
 }

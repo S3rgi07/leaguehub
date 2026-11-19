@@ -21,7 +21,8 @@ fun PermissionsRoute(
         factory = viewModelFactory {
             initializer {
                 PermissionsViewModel(
-                    sessionRepository = application.userSessionRepository
+                    sessionRepository = application.userSessionRepository,
+                    storage = application.permissionsState
                 )
             }
         }

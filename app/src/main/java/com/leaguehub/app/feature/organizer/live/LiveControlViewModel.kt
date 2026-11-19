@@ -1,6 +1,8 @@
 package com.leaguehub.app.feature.organizer.live
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import com.leaguehub.app.feature.organizer.MatchWorkflowRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +24,8 @@ class LiveControlViewModel(
     )
     val state: StateFlow<LiveControlState> = _state.asStateFlow()
 
+    init { if (repository.isPersistent) viewModelScope.launch { repository.state.collect { sync() } } }
+
     fun onEvent(event: LiveControlEvent) {
         when (event) {
             LiveControlEvent.GoalClicked -> {
@@ -40,14 +44,10 @@ class LiveControlViewModel(
                 repository.togglePaused()
                 sync()
             }
-            is LiveControlEvent.EventEditClicked -> _state.update { current ->
-                current.copy(recentEvents = current.recentEvents.map {
-                    if (it.id == event.eventId) it.copy(title = "${it.title} · editado") else it
-                })
-            }
+            is LiveControlEvent.EventEditClicked -> { repository.editLiveEvent(event.eventId); sync() }
             LiveControlEvent.FinishMatchClicked -> {
                 repository.publish()
-                _state.update { it.copy(isFinished = true, isPaused = true) }
+                if (!repository.isPersistent) _state.update { it.copy(isFinished = true, isPaused = true) }
             }
         }
     }
@@ -59,7 +59,8 @@ class LiveControlViewModel(
                 homeScore = current.homeScore,
                 awayScore = current.awayScore,
                 recentEvents = current.liveEvents,
-                isPaused = current.isPaused
+                isPaused = current.isPaused,
+                isFinished = current.isPublished
             )
         }
     }

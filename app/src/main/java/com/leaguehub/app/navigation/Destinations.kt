@@ -44,7 +44,7 @@ data object StandingsDestination
 
 @Serializable
 data class PlayerProfileDestination(
-    val playerId: String
+    val playerId: String? = null
 )
 
 @Serializable
@@ -109,3 +109,5 @@ data class LiveControlDestination(
 data class PublishedResultDestination(
     val matchId: String
 )
+@kotlinx.serialization.Serializable
+data object LocalHubDestination

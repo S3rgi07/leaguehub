@@ -1,5 +1,11 @@
 package com.leaguehub.app.feature.auth.login
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,16 +57,11 @@ fun LoginScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .padding(WindowInsets.safeDrawing.asPaddingValues())
+            .imePadding()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 24.dp)
     ) {
-
-        Text(
-            text = "‹",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
 
         Icon(
             painter = painterResource(R.drawable.ic_leaguehub_logo),
@@ -96,7 +97,7 @@ fun LoginScreen(
             shape = MaterialTheme.shapes.medium,
             textStyle = MaterialTheme.typography.bodyMedium,
             placeholder = {
-                Text("sofia@leaguehub.app")
+                Text("correo@ejemplo.com")
             },
             colors = loginTextFieldColors()
         )
@@ -159,32 +160,9 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        OrDivider()
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            SocialButton(
-                text = "Google",
-                modifier = Modifier.weight(1f),
-                onClick = onGoogleClick
-            )
-
-            SocialButton(
-                text = "Apple",
-                modifier = Modifier.weight(1f),
-                onClick = onAppleClick
-            )
-        }
-
-        Spacer(modifier = Modifier.height(22.dp))
-
         SecurityCard()
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Text(
             text = "¿Nuevo en LeagueHub?",
@@ -304,7 +282,7 @@ private fun SecurityCard() {
 private fun LoginScreenPreview() {
     LeagueHubTheme {
         LoginScreen(
-            email = "sofia@leaguehub.app",
+            email = "correo@ejemplo.com",
             password = "123456789"
         )
     }
@@ -318,7 +296,7 @@ private fun LoginScreenPreview() {
 private fun LoginErrorPreview() {
     LeagueHubTheme {
         LoginScreen(
-            email = "sofia@leaguehub.app",
+            email = "correo@ejemplo.com",
             password = "123456789",
             errorMessage = "Correo o contraseña incorrectos"
         )

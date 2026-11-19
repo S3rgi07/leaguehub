@@ -8,35 +8,39 @@ import kotlinx.coroutines.flow.update
 import com.leaguehub.app.data.repository.UserSessionRepository
 
 class PermissionsViewModel(
-    private val sessionRepository: UserSessionRepository
+    private val sessionRepository: UserSessionRepository,
+    private val storage: com.leaguehub.app.data.repository.UserScopedState<PermissionsState>? = null
 ) : ViewModel() {
     private val _state = MutableStateFlow(PermissionsState())
 
-    val state: StateFlow<PermissionsState> = _state.asStateFlow()
+    val state: StateFlow<PermissionsState> = storage?.state ?: _state.asStateFlow()
+    private fun change(transform: (PermissionsState) -> PermissionsState) {
+        storage?.update(transform) ?: _state.update(transform)
+    }
 
     fun onEvent(event: PermissionsEvent) {
         when (event) {
 
             is PermissionsEvent.LiveMatchesChanged -> {
-                _state.update {
+                change {
                     it.copy(liveMatchesEnabled = event.enabled)
                 }
             }
 
             is PermissionsEvent.RemindersChanged -> {
-                _state.update {
+                change {
                     it.copy(remindersEnabled = event.enabled)
                 }
             }
 
             is PermissionsEvent.SmartPreviewChanged -> {
-                _state.update {
+                change {
                     it.copy(smartPreviewEnabled = event.enabled)
                 }
             }
 
             is PermissionsEvent.LocationChanged -> {
-                _state.update {
+                change {
                     it.copy(locationEnabled = event.enabled)
                 }
             }
@@ -44,7 +48,7 @@ class PermissionsViewModel(
             PermissionsEvent.CompleteClicked -> {
                 sessionRepository.completeOnboarding()
 
-                _state.update {
+                change {
                     it.copy(
                         isCompleted = true,
                         isSkipped = false
@@ -53,7 +57,7 @@ class PermissionsViewModel(
             }
 
             PermissionsEvent.SkipClicked -> {
-                _state.update {
+                change {
                     it.copy(
                         isSkipped = true,
                         isCompleted = false

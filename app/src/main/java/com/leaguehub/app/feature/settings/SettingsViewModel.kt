@@ -1,6 +1,8 @@
 package com.leaguehub.app.feature.settings
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import com.leaguehub.app.data.repository.FollowedTeamsRepository
 import com.leaguehub.app.data.repository.UserSessionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,28 +12,39 @@ import kotlinx.coroutines.flow.update
 
 class SettingsViewModel(
     private val sessionRepository: UserSessionRepository,
-    private val followedTeamsRepository: FollowedTeamsRepository
+    private val followedTeamsRepository: FollowedTeamsRepository,
+    private val appearanceStorage: com.leaguehub.app.data.repository.UserScopedState<String>? = null
 ) : ViewModel() {
     private val session = sessionRepository.session.value
     private val _state = MutableStateFlow(
         SettingsState(
-            userName = session.userName?.takeIf { it.isNotBlank() } ?: "Sofía Méndez",
-            userEmail = session.email?.takeIf { it.isNotBlank() } ?: "sofia@leaguehub.app"
+            userName = session.userName?.takeIf { it.isNotBlank() } ?: "Mi perfil",
+            userEmail = session.email?.takeIf { it.isNotBlank() } ?: ""
         )
     )
     val state: StateFlow<SettingsState> = _state.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            sessionRepository.session.collect { session -> _state.update { it.copy(userName = session.userName ?: "Mi perfil", userEmail = session.email.orEmpty()) } }
+        }
+        appearanceStorage?.let { storage -> viewModelScope.launch {
+            storage.state.collect { appearance -> _state.update { it.copy(appearance = appearance) } }
+        } }
+    }
+
     fun onEvent(event: SettingsEvent) {
         when (event) {
-            SettingsEvent.AppearanceClicked -> _state.update {
-                it.copy(appearance = if (it.appearance == "Oscuro") "Claro" else "Oscuro")
+            SettingsEvent.AppearanceClicked -> {
+                if (appearanceStorage != null) appearanceStorage.update { if (it == "Oscuro") "Claro" else "Oscuro" }
+                else _state.update { it.copy(appearance = if (it.appearance == "Oscuro") "Claro" else "Oscuro") }
             }
             SettingsEvent.PrivacyClicked -> _state.update {
-                it.copy(message = "Tus datos de esta demostración se mantienen localmente durante la sesión.")
+                it.copy(message = "Tus cuentas y cambios se guardan en Room (SQLite) en este dispositivo. No hay sincronización con un servidor.")
             }
             SettingsEvent.LogoutClicked -> {
                 sessionRepository.logout()
-                followedTeamsRepository.clear()
+
                 _state.update { it.copy(isLoggedOut = true) }
             }
             SettingsEvent.MessageDismissed -> _state.update { it.copy(message = null) }

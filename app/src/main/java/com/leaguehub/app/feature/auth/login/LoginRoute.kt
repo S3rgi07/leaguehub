@@ -24,7 +24,7 @@ fun LoginRoute(
         factory = viewModelFactory {
             initializer {
                 LoginViewModel(
-                    sessionRepository = application.userSessionRepository
+                    authRepository = application.authRepository
                 )
             }
         }

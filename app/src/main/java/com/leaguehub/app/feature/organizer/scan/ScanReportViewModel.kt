@@ -1,6 +1,8 @@
 package com.leaguehub.app.feature.organizer.scan
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import com.leaguehub.app.feature.organizer.MatchWorkflowRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +22,10 @@ class ScanReportViewModel(
         )
     )
     val state: StateFlow<ScanReportState> = _state.asStateFlow()
+
+    init { if (repository.isPersistent) viewModelScope.launch { repository.state.collect { current ->
+        _state.update { it.copy(homeScore = current.homeScore, awayScore = current.awayScore, status = current.scanStatus) }
+    } } }
 
     fun onEvent(event: ScanReportEvent) {
         when (event) {
