@@ -23,7 +23,8 @@ class LocalHubFlowTest {
     private lateinit var vm: LocalHubViewModel
     private fun waitSaved() { compose.waitUntil(10_000) { !vm.state.value.busy && vm.state.value.editor==null }; compose.waitForIdle() }
     private fun field(key: String,value: String) { compose.onNodeWithTag("field-$key").performScrollTo().performTextReplacement(value) }
-    private fun tab(section: String) { compose.onNodeWithTag("local-list").performScrollToIndex(0);compose.onNodeWithTag("tab-$section").performClick() }
+    private fun tab(section: String) { if(section in listOf("LEAGUES","CLUBS","PLAYERS")) compose.onNodeWithTag("local-list").performScrollToNode(hasTestTag("tab-$section"))
+        compose.onNodeWithTag("tab-$section").performClick() }
     private fun click(text: String) { compose.onNodeWithTag("local-list").performScrollToNode(hasText(text));compose.onNodeWithText(text).performClick() }
     private fun save() { compose.onNodeWithTag("form-save").performClick();waitSaved() }
 
@@ -62,9 +63,9 @@ class LocalHubFlowTest {
             assertEquals(3,vm.state.value.data.table(vm.state.value.leagueId!!).first().points)
             tab("PROFILE")
             compose.onNodeWithText("Ana Local").assertIsDisplayed()
-            compose.onNodeWithText("1 goles · 0 asistencias · 1 partidos").assertIsDisplayed()
+            compose.onNodeWithTag("local-list").performScrollToNode(hasText("1 goles · 0 asistencias · 1 partidos"));compose.onNodeWithText("1 goles · 0 asistencias · 1 partidos").assertIsDisplayed()
             click("Editar mi nombre");field("name","Ana Actualizada");save()
-            compose.onNodeWithText("Ana Actualizada").assertIsDisplayed()
+            compose.onNodeWithTag("local-list").performScrollToIndex(0);compose.onNodeWithText("Ana Actualizada").assertIsDisplayed()
             tab("MATCHES");click("Ver eventos")
             val event=vm.state.value.data.events.single()
             compose.runOnIdle { vm.onEvent(LocalEvent.RequestDelete("event",event.id,"Gol")) }

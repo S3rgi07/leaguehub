@@ -11,19 +11,20 @@ fun LocalState.ui()=LocalUiState(session.userName ?: "Mi perfil",session.email.o
     leagueId,data.leagues.map { it.id to "${it.name} · ${it.season}" },loading,busy,error,message,editor,deletion,logoutConfirmation,appearance)
 data class LeagueRow(val id:String,val name:String,val season:String,val selected:Boolean,val canEdit:Boolean)
 data class ClubRow(val id:String,val leagueId:String,val name:String,val playerCount:Int,val following:Boolean)
-data class PlayerRow(val id:String,val name:String,val number:Int,val team:String,val position:String,val stats:String,val discipline:String,val rating:String?,val isMe:Boolean)
-data class MatchRow(val id:String,val title:String,val score:String,val scheduled:Boolean,val date:String,val venue:String,val shareText:String)
+data class PlayerRow(val id:String,val name:String,val number:Int,val team:String,val position:String,val stats:String,val discipline:String,val rating:String?,val isMe:Boolean,val goals:Int=0,val assists:Int=0,val played:Int=0,val yellow:Int=0,val red:Int=0,val minutes:Int=0,val recentRatings:List<Double> = emptyList())
+data class MatchRow(val id:String,val title:String,val score:String,val scheduled:Boolean,val date:String,val venue:String,val shareText:String,val home:String="",val away:String="",val scoreline:String="VS",val day:java.time.LocalDate?=null)
 data class EventRow(val id:String,val title:String,val player:String,val details:String?)
-data class PositionRow(val id:String,val title:String,val numbers:String)
+data class PositionRow(val id:String,val title:String,val numbers:String,val name:String="",val position:Int=0,val played:Int=0,val difference:Int=0,val points:Int=0)
 fun LocalState.playerRow(player:PlayerEntity):PlayerRow {
     val totals=data.totals(player.id)
     return PlayerRow(player.id,player.name,player.number,data.clubs.find { it.id==player.clubId }?.name.orEmpty(),player.position,
         "${totals.goals} goles · ${totals.assists} asistencias · ${totals.matches} partidos","${totals.yellow} amarillas · ${totals.red} rojas · ${totals.minutes} minutos",
-        totals.rating?.let { "Valoración: ${String.format(java.util.Locale.ROOT,"%.1f",it)}" },player.accountId!=null && player.accountId==session.userId)
+        totals.rating?.let { "Valoración: ${String.format(java.util.Locale.ROOT,"%.1f",it)}" },player.accountId!=null && player.accountId==session.userId,totals.goals,totals.assists,totals.matches,totals.yellow,totals.red,totals.minutes,
+        data.events.filter { it.playerId==player.id && it.rating!=null && data.fixtures.any { f->f.id==it.fixtureId && f.homeScore!=null } }.sortedBy { e->data.fixtures.find { it.id==e.fixtureId }?.kickoff }.mapNotNull { it.rating }.takeLast(5))
 }
 fun LocalState.matchRow(match:FixtureEntity):MatchRow {
     val title="${data.clubs.find { it.id==match.homeId }?.name.orEmpty()} vs ${data.clubs.find { it.id==match.awayId }?.name.orEmpty()}"
     val score=if(match.homeScore==null) "Programado" else "Resultado: ${match.homeScore} – ${match.awayScore}"
-    return MatchRow(match.id,title,score,match.homeScore==null,"Jornada ${match.matchday} · ${LocalDateTime.parse(match.kickoff).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}",match.venue,"$title\n$score\n${match.kickoff.replace('T',' ')} · ${match.venue}")
+    return MatchRow(match.id,title,score,match.homeScore==null,"Jornada ${match.matchday} · ${LocalDateTime.parse(match.kickoff).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}",match.venue,"$title\n$score\n${match.kickoff.replace('T',' ')} · ${match.venue}",data.clubs.find { it.id==match.homeId }?.name.orEmpty(),data.clubs.find { it.id==match.awayId }?.name.orEmpty(),if(match.homeScore==null) "VS" else "${match.homeScore} : ${match.awayScore}",LocalDateTime.parse(match.kickoff).toLocalDate())
 }
 fun eventTitle(kind:String)=when(kind) { "GOAL"->"Gol";"ASSIST"->"Asistencia";"YELLOW"->"Amarilla";"RED"->"Roja";else->"Participación" }

@@ -2,6 +2,10 @@ package com.leaguehub.app.feature.local.clubs
 
 import com.leaguehub.app.feature.local.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
+import com.leaguehub.app.R
+import com.leaguehub.app.core.components.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
@@ -15,8 +19,8 @@ fun ClubsScreen(state:ClubsState,onEvent:(ClubsEvent)->Unit) {
  
  item { SectionTitle("Equipos",state.canManage,"Crear equipo") { onEvent(ClubsEvent.Add) } }
  if(state.clubs.isEmpty() && !state.ui.loading) item { EmptyLocal("No hay equipos en la liga seleccionada.") }
- items(state.clubs,key={it.id}) { row -> LeagueHubCard(Modifier.fillMaxWidth()) {
-  Text(row.name,style=MaterialTheme.typography.titleLarge);Text("${row.playerCount} jugadores")
+ items(state.clubs,key={it.id}) { row -> HeroCard {
+  Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) { ClubCrest(row.name,Modifier.size(64.dp));Column { Text(row.name,style=MaterialTheme.typography.headlineSmall);MutedText("${row.playerCount} jugadores en plantilla");LeagueBadge(if(row.following) "SIGUIENDO" else "EQUIPO DE LA LIGA",color=MaterialTheme.colorScheme.secondary) } }
   TextButton(onClick={onEvent(ClubsEvent.Follow(row.id))}) { Text(if(row.following) "Siguiendo" else "Seguir equipo") }
   TextButton(onClick={onEvent(ClubsEvent.Players(row.id))}) { Text("Ver plantilla de ${row.name}") }
   if(state.canManage) EditActions({onEvent(ClubsEvent.Edit(row.id))},{onEvent(ClubsEvent.Delete(row.id))})
