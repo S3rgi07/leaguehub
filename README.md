@@ -5,6 +5,102 @@ partidos, resultados y estadísticas. La gestión deportiva usa datos de Room/SQ
 Inicio también consulta un anuncio remoto de demostración cuando hay Internet; un error de red
 no bloquea las funciones locales.
 
+## Retomar aquí: rama `featureFirebase` · Firebase 1.2
+
+**El código está integrado y la rama local estable sigue en `FeatureFinal`.** El archivo que se
+proporcionó corresponde al proyecto `leaguehub-ffd96` y al paquete `com.leaguehub.app`; se copió
+a `app/google-services.json`. Ese archivo se excluye de Git y no se han solicitado claves de
+administrador. En otra máquina vuelve a descargarlo de Firebase Console y colócalo en `app/`.
+Sin el archivo la aplicación compila y conserva el modo local, pero no activa Firebase.
+
+### Lo que falta en Firebase Console, antes de la exposición
+
+1. Abrir el proyecto **leaguehub-ffd96** y habilitar **Authentication → Correo electrónico/contraseña**.
+2. Crear **Cloud Firestore Standard**, base `(default)`, si todavía no existe, eligiendo su ubicación.
+3. Publicar **exactamente** las reglas de `firebase/firestore.rules`. Desde esta carpeta:
+
+```powershell
+cd firebase
+npm ci --include=dev
+npx firebase login
+npx firebase deploy --project leaguehub-ffd96 --only firestore:rules,firestore:indexes
+cd ..
+```
+
+También se pueden copiar las reglas a la pestaña Reglas de Firestore Console. No dejar reglas
+abiertas de modo prueba. El JSON de Android no permite publicar reglas ni activar servicios;
+para esos pasos hace falta la sesión del dueño del proyecto en Console/CLI.
+
+4. Antes de actualizar, exportar un respaldo desde la versión local y conservar el APK 1.1.
+   Instalar el APK de esta rama **en dos teléfonos**, sin borrar la instalación anterior. En el
+primero entrar con la cuenta local o ir a **Perfil → Configuración → Sincronización Firebase** y
+conectarla con su contraseña. Esperar **Sincronización al día**. Entrar con el mismo correo y
+contraseña en el segundo, crear/editar un resultado y comprobar el cambio en ambos.
+5. Probar la reconexión y cerrar un conflicto desde esa pantalla antes de la exposición.
+
+**No se ha verificado producción ni desplegado reglas en el proyecto real.** Las pruebas de
+sincronización usan Auth/Firestore Emulator Suite y dos clientes SDK con bases Room separadas.
+No deben confundirse con una prueba física en dos teléfonos contra el proyecto de producción.
+
+### Implementación que ya está en esta rama
+
+- Firebase Authentication para registro, acceso, vinculación de cuentas locales, cambio de
+  contraseña y solicitud real del enlace de recuperación por correo.
+- Room v5 conserva la base anterior con una migración `4 → 5`, sin migración destructiva.
+  Los IDs locales de las cuentas existentes se mantienen; un vínculo al UID de Firebase permite
+  reconocer al mismo usuario en otro teléfono.
+- Las ligas, equipos, jugadores, partidos, resultados, eventos, alineaciones, sustituciones y
+  reloj se intercambian por Firestore. Las ligas sincronizadas son visibles para usuarios
+  autenticados de este proyecto; solo su dueño puede escribirlas.
+- Una cola durable por liga se actualiza mediante triggers SQLite en la misma transacción
+  que los formularios existentes. Si se cierra el proceso o no hay conexión, los cambios siguen
+  en Room. Las descargas remotas se aplican en una transacción con validación de referencias.
+- Cada liga usa una revisión y transacciones de Firestore. Dos ediciones diferentes generan un
+  conflicto visible; no se descarta una versión en silencio. Al elegir una, se guarda una copia
+  local exportable de la otra. Las eliminaciones dejan una marca remota versionada para evitar
+  que un teléfono desconectado restaure datos borrados.
+- La pantalla de sincronización tiene su propio Screen/ViewModel/State/Event/Route, con estado,
+  errores, reintento, conflictos y exportación de cada copia de recuperación.
+- La cuenta demo mantiene `demo@leaguehub.app` / `DemoLiga2026!`, salvo que el usuario haya
+  cambiado su contraseña. Primero hay que conectarla en un teléfono para crear su acceso en
+  Firebase y publicar su liga. El segundo debe usar esas mismas credenciales.
+
+### Validación de esta entrega Firebase
+
+- APK `1.2-firebase` (código 3), disponible en [`APK/LeagueHub-debug.apk`](APK/LeagueHub-debug.apk).
+- 25 pruebas JVM y 34 pruebas instrumentadas Android aprobadas, sin pruebas omitidas.
+- 5 pruebas de reglas Firestore aprobadas. Build y lint correctos: 0 errores, 34 advertencias.
+- Se probó migración Room v4 → v5 con conservación de datos, SDK Firebase con dos clientes,
+  cola tras reabrir la base, reconexión, conflictos, copia recuperable, eliminación remota,
+  documentos inválidos, cambio de contraseña y solicitud de recuperación en emuladores.
+- Compilación sin `google-services.json` también verificada para conservar el modo local.
+- Captura de la nueva pantalla con un estado de prueba: [sincronización](docs/capturas/firebase/sincronizacion.png).
+- Para otra IA: empezar por [`docs/FIREBASE_CONTINUAR.md`](docs/FIREBASE_CONTINUAR.md),
+  continuar en `featureFirebase` y completar primero la configuración manual y las pruebas reales.
+
+### Límites y pendientes reales
+
+- La actualización conserva los datos al migrar de Room v4 a v5. El APK antiguo 1.1 no puede abrir
+  directamente una base v5: no forzar un downgrade. Conservar el respaldo previo y la rama estable.
+
+- Las fotos/URI de galería **no** se suben: una URI del teléfono no funciona en otro. La galería
+  local se conserva cuando una revisión remota mantiene el partido. Para compartir las imágenes
+  falta integrar Firebase Storage y sus reglas; no se ha habilitado facturación ni Storage.
+- Apariencia, equipos seguidos y marcas de lectura permanecen por dispositivo. El perfil privado
+  guarda nombre, modo y liga seleccionada para el acceso en otra instalación.
+- El buscador de cuentas para vincular jugadores por correo continúa siendo local. Para enlazar
+  una cuenta que solo existe en otro teléfono falta diseñar un directorio/búsqueda con privacidad;
+  no publicar correos de todos los usuarios como solución rápida.
+- Cada liga se transmite como una unidad atómica con un máximo de **750 KB**. La aplicación
+  rechaza superar ese límite y conserva los datos locales. Para volúmenes mayores hay que dividir
+  por temporadas o sustituir el agregado por subcolecciones con su propio protocolo de revisiones.
+- La vinculación inicial necesita los servicios configurados y conexión. Si Firebase no está
+  disponible, una cuenta local válida puede seguir usándose localmente; no significa que ya
+  esté sincronizada. La pantalla de estado distingue estos casos.
+- OCR, predicciones de IA y notificaciones push siguen pendientes, como se acordó.
+
+Más contexto técnico y comandos de pruebas: [docs/FIREBASE_CONTINUAR.md](docs/FIREBASE_CONTINUAR.md).
+
 ## Ejecutar
 
 1. Abrir esta carpeta (`leaguehub`) en Android Studio.
@@ -56,7 +152,7 @@ acceso para que haya próximos partidos en el calendario.
 
 Los datos se guardan en Room y se pueden editar. Volver a iniciar sesión no duplica la liga,
 no revierte cambios ni restaura eliminaciones. Si cambias la contraseña de esta cuenta,
-deberás usar tu nueva contraseña. La cuenta se prepara al iniciar sesión y funciona sin Internet.
+deberás usar tu nueva contraseña. La cuenta demo local se prepara al iniciar sesión y funciona sin Internet; vincularla a Firebase y acceder desde otro teléfono requiere la configuración y conexión indicadas al principio.
 
 ## Flujo recuperado de Figma · versión 1.1
 
@@ -111,7 +207,8 @@ compilación y lint sin errores. Los avisos de lint restantes no bloquean la com
 | Servicio | Función y condiciones |
 |---|---|
 | Base propia Room/SQLite | Guarda cuentas, ligas, plantillas, partidos, resultados, eventos y preferencias en el teléfono. Es la fuente de los datos deportivos, no una API deportiva externa. |
-| Autenticación local propia | Registro y acceso mediante correo como identificador y contraseña con hash/sal. No utiliza Google, Apple ni un proveedor de autenticación en Internet. |
+| Firebase Authentication y acceso local | Esta rama vincula las cuentas a Firebase con correo/contraseña. Room conserva el acceso y los datos locales cuando no hay conexión. Las contraseñas y sus hashes no se escriben en Firestore. No se integró acceso Google/Apple. |
+| Cloud Firestore | Sincroniza datos deportivos por liga con revisiones, reglas de propiedad y conflictos explícitos. Requiere activar la base y publicar las reglas incluidas. |
 | [JSONPlaceholder](https://jsonplaceholder.typicode.com/) | API pública de datos ficticios. Inicio ejecuta `GET https://jsonplaceholder.typicode.com/posts/1` mediante Retrofit y muestra su título como anuncio de demostración. La documentación oficial indica que no requiere registro ni API key. No se presenta como una noticia deportiva real. |
 | Selector de documentos de Android | Exporta/importa respaldos JSON mediante Storage Access Framework, sin permisos generales de almacenamiento. |
 | Compartir y mapas de Android | Abre el selector del sistema para compartir y una aplicación de mapas instalada para consultar la cancha. No utiliza el SDK de Google Maps ni consulta la ubicación GPS. |
@@ -131,6 +228,7 @@ los datos de la liga; esas operaciones permanecen locales.
 - **AndroidX Lifecycle y ViewModel:** estado por pantalla, ciclo de vida y `collectAsStateWithLifecycle`.
 - **Kotlin Coroutines / Flow / StateFlow:** operaciones asíncronas, estado observable y efectos de navegación.
 - **Room / SQLite:** entidades relacionadas, consultas observables, transacciones y migraciones locales.
+- **Firebase Auth + Firestore (BoM 34.7.0):** autenticación y sincronización opcional de esta rama. Google Services 4.4.4 procesa la configuración Android local.
 - **Retrofit + Gson:** llamada HTTP y conversión del anuncio remoto de JSONPlaceholder.
 - **AndroidX Activity Result:** contratos de selección y creación de archivos de Android.
 - **JUnit, AndroidX Test, Compose UI Test y Espresso:** infraestructura de pruebas unitarias e instrumentadas.
@@ -245,15 +343,14 @@ Los documentos `docs/INTEGRANTE-2.md` y `docs/integrante-3.md` describen entrega
 ## Alcance de esta versión
 
 Todo el recorrido anterior funciona en el mismo teléfono. GitHub guarda el código, no la base
-de datos del dispositivo. Las cuentas, ligas y cambios no se sincronizan entre teléfonos.
-La recuperación por correo y los accesos Google/Apple requieren servicios externos y no forman
-parte de esta versión local. La pantalla de recuperación lo explica sin simular un envío.
-Cámara/OCR, predicciones, avisos programados y publicación en Internet quedan fuera del flujo
+de datos del dispositivo. En `FeatureFinal` los datos son solo locales; en `featureFirebase` las cuentas vinculadas sincronizan las ligas mediante Firestore.
+En esta rama la recuperación por correo usa Firebase Authentication cuando está configurado. Los accesos Google/Apple no se han integrado.
+Cámara/OCR, predicciones, avisos programados y publicación web abierta quedan fuera del flujo
 local; no se presentan como acciones disponibles. Compartir un partido abre el selector de Android. Abrir ubicación delega en una aplicación de mapas instalada (su disponibilidad sin conexión depende de esa aplicación). Desde Equipos se puede seguir/dejar de seguir equipos; la selección se conserva por cuenta y aparece en Perfil.
 
 ## Continuar el desarrollo
 
-La rama de trabajo es `FeatureFinal`. Recuperar con `git fetch origin`, `git switch FeatureFinal`
+La rama de esta integración es `featureFirebase`; `FeatureFinal` conserva la versión local estable. Recuperar con `git fetch origin`, `git switch featureFirebase`
 y `git pull --ff-only`. Se hacen commits cortos en español y se suben al terminar bloques validados.
 Conservar los cambios personales de Android Studio (`.idea`) que estén fuera de esos commits.
 
@@ -283,3 +380,4 @@ La recuperación visual también pasó 25 pruebas unitarias y 30 instrumentadas 
 con lint sin errores. Incluye la comprobación del perfil de la cuenta activa, su historial de Room,
 los filtros General/Local/Visitante y el calendario por fecha. Las capturas anteriores corresponden
 al mismo código del APK actualizado de esta entrega.
+
