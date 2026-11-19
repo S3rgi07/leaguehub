@@ -48,6 +48,10 @@ fun LocalHomeScreen(state:LocalHomeState,onEvent:(LocalHomeEvent)->Unit) {
    } } }
   }
  }
+ item { Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+  OutlinedButton(onClick={onEvent(LocalHomeEvent.Common(LocalEvent.OpenPage(LocalPage.EXPLORE)))}) { Text("Explorar ligas") }
+  if(state.ui.organizer) TextButton(onClick={onEvent(LocalHomeEvent.Common(LocalEvent.OpenPage(LocalPage.DASHBOARD)))}) { Text("Panel organizador") }
+ } }
  item { SectionHeading("Comunidad") }
  item { LeagueHubCard(Modifier.fillMaxWidth()) {
   LeagueBadge("ANUNCIO REMOTO · DEMOSTRACIÓN",color=MaterialTheme.colorScheme.secondary,icon=R.drawable.lh_news)

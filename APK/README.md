@@ -1,6 +1,6 @@
 # APK de entrega
 
-Instalar `LeagueHub-debug.apk`: es la compilación actual con la interfaz recuperada.
+Instalar `LeagueHub-debug.apk`: es la versión 1.1 con el flujo de Figma recuperado, Match Center y alineaciones persistentes.
 `LeagueHub-debug (2).apk` corresponde a una entrega anterior.
 
 El APK actual se copia de `app/build/outputs/apk/debug/app-debug.apk` después de verificar

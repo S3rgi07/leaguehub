@@ -6,6 +6,12 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 sealed interface LocalEffect {
+    data class Page(val page:LocalPage):LocalEffect
+    data class League(val id:String):LocalEffect
+    data class Team(val id:String):LocalEffect
+    data class Center(val id:String):LocalEffect
+    data class Details(val id:String):LocalEffect
+    data object ImageFile:LocalEffect
     data class Section(val section:LocalSection):LocalEffect
     data class ClubPlayers(val clubId:String):LocalEffect
     data class MatchEvents(val matchId:String):LocalEffect
@@ -25,6 +31,7 @@ abstract class LocalFeatureViewModel(protected val store:LocalHubViewModel):View
         when(event) {
             is LocalEvent.Navigate -> if(!store.state.value.busy) { store.onEvent(LocalEvent.Dismiss);effect(LocalEffect.Section(event.section)) }
             LocalEvent.Back -> if(!store.state.value.busy) effect(LocalEffect.Back)
+            is LocalEvent.OpenPage -> effect(LocalEffect.Page(event.page))
             LocalEvent.OpenBackups -> effect(LocalEffect.Backups)
             else -> store.onEvent(event)
         }
@@ -37,6 +44,8 @@ abstract class LocalFeatureViewModel(protected val store:LocalHubViewModel):View
     protected fun matchAction(id:String,action:MatchAction) {
         val item=store.state.value.data.fixtures.find { it.id==id } ?: return
         when(action) {
+            MatchAction.CENTER -> effect(LocalEffect.Center(id))
+            MatchAction.DETAIL -> effect(LocalEffect.Details(id))
             MatchAction.EVENTS -> effect(LocalEffect.MatchEvents(id))
             MatchAction.MAP -> matchAction(id,false)
             MatchAction.SHARE -> matchAction(id,true)

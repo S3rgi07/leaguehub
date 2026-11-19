@@ -12,7 +12,7 @@ fun LocalState.ui()=LocalUiState(session.userName ?: "Mi perfil",session.email.o
 data class LeagueRow(val id:String,val name:String,val season:String,val selected:Boolean,val canEdit:Boolean)
 data class ClubRow(val id:String,val leagueId:String,val name:String,val playerCount:Int,val following:Boolean)
 data class PlayerRow(val id:String,val name:String,val number:Int,val team:String,val position:String,val stats:String,val discipline:String,val rating:String?,val isMe:Boolean,val goals:Int=0,val assists:Int=0,val played:Int=0,val yellow:Int=0,val red:Int=0,val minutes:Int=0,val recentRatings:List<Double> = emptyList(),val scoringStreak:Int=0,val goalRank:Int?=null)
-data class MatchRow(val id:String,val title:String,val score:String,val scheduled:Boolean,val date:String,val venue:String,val shareText:String,val home:String="",val away:String="",val scoreline:String="VS",val day:java.time.LocalDate?=null)
+data class MatchRow(val id:String,val title:String,val score:String,val scheduled:Boolean,val date:String,val venue:String,val shareText:String,val home:String="",val away:String="",val scoreline:String="VS",val day:java.time.LocalDate?=null,val statusLabel:String="")
 data class EventRow(val id:String,val title:String,val player:String,val details:String?)
 data class PositionRow(val id:String,val title:String,val numbers:String,val name:String="",val position:Int=0,val played:Int=0,val difference:Int=0,val points:Int=0)
 fun LocalState.playerRow(player:PlayerEntity):PlayerRow {
@@ -29,7 +29,10 @@ fun LocalState.playerRow(player:PlayerEntity):PlayerRow {
 }
 fun LocalState.matchRow(match:FixtureEntity):MatchRow {
     val title="${data.clubs.find { it.id==match.homeId }?.name.orEmpty()} vs ${data.clubs.find { it.id==match.awayId }?.name.orEmpty()}"
-    val score=if(match.homeScore==null) "Programado" else "Resultado: ${match.homeScore} – ${match.awayScore}"
-    return MatchRow(match.id,title,score,match.homeScore==null,"Jornada ${match.matchday} · ${LocalDateTime.parse(match.kickoff).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}",match.venue,"$title\n$score\n${match.kickoff.replace('T',' ')} · ${match.venue}",data.clubs.find { it.id==match.homeId }?.name.orEmpty(),data.clubs.find { it.id==match.awayId }?.name.orEmpty(),if(match.homeScore==null) "VS" else "${match.homeScore} : ${match.awayScore}",LocalDateTime.parse(match.kickoff).toLocalDate())
+    val sheet=data.sheets[match.id]
+    val live=match.homeScore==null && sheet!=null && sheet.phase!="SCHEDULED"
+    val model=matchModel(match)
+    val score=if(live) "En vivo: ${model.homeScore} – ${model.awayScore}" else if(match.homeScore==null) "Programado" else "Resultado: ${match.homeScore} – ${match.awayScore}"
+    return MatchRow(match.id,title,score,match.homeScore==null,"Jornada ${match.matchday} · ${LocalDateTime.parse(match.kickoff).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}",match.venue,"$title\n$score\n${match.kickoff.replace('T',' ')} · ${match.venue}",data.clubs.find { it.id==match.homeId }?.name.orEmpty(),data.clubs.find { it.id==match.awayId }?.name.orEmpty(),if(live) "${model.homeScore} : ${model.awayScore}" else if(match.homeScore==null) "VS" else "${match.homeScore} : ${match.awayScore}",LocalDateTime.parse(match.kickoff).toLocalDate(),if(live) "${if(sheet?.phase=="HALFTIME") "DESCANSO" else "EN VIVO"} · ${sheet?.minute}′" else if(match.homeScore==null) "PRÓXIMO PARTIDO" else "FINAL")
 }
 fun eventTitle(kind:String)=when(kind) { "GOAL"->"Gol";"ASSIST"->"Asistencia";"YELLOW"->"Amarilla";"RED"->"Roja";else->"Participación" }

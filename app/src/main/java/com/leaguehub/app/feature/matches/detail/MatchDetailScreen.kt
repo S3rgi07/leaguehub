@@ -62,7 +62,7 @@ fun MatchDetailScreen(
                 LeagueIcon(R.drawable.lh_location, null,
                     Modifier.align(Alignment.Center).offset(x = 64.dp), MaterialTheme.colorScheme.primary)
             }
-        } else item { EmptyContent("Consulta la ubicación de la cancha en tu aplicación de mapas.") }
+        } else item { Column(verticalArrangement=Arrangement.spacedBy(8.dp)) { Image(painterResource(R.drawable.lh_map),"Mapa ilustrativo",Modifier.fillMaxWidth().aspectRatio(350f/178f),contentScale=ContentScale.Fit);MutedText("Vista ilustrativa. Abre mapas para ubicar la cancha y calcular tu ruta real.") } }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(onStartRoute, Modifier.weight(1.6f).heightIn(min = 52.dp), shape = MaterialTheme.shapes.medium,

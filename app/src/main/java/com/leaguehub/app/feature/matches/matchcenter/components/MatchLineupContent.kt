@@ -30,10 +30,10 @@ fun MatchLineupContent(lineups: List<TeamLineupUiModel>, selectedTeamId: String,
         if (lineup == null) {
             Text("Alineación por confirmar", style = MaterialTheme.typography.bodyMedium)
         } else {
-            Pitch(lineup)
+            if(lineup.starters.isEmpty()) Text("Alineación por confirmar",style=MaterialTheme.typography.bodyMedium) else Pitch(lineup)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Suplentes", style = MaterialTheme.typography.titleMedium)
-                Text("DT · ${lineup.coach}", style = MaterialTheme.typography.bodySmall)
+                Text(if(lineup.coach=="Sin registrar") "" else "DT · ${lineup.coach}", style = MaterialTheme.typography.bodySmall)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 lineup.substitutes.take(3).forEach { player ->
@@ -70,7 +70,7 @@ private fun Pitch(lineup: TeamLineupUiModel) {
                 Box(Modifier.size(28.dp).background(color, CircleShape), contentAlignment = Alignment.Center) {
                     Text("${entry.player.number}", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.bodySmall)
                 }
-                Text(if (entry.player.number == 10 && entry.player.name.startsWith("Sofía")) "Sofía" else entry.player.name,
+                Text(entry.player.name.substringBefore(" "),
                     style = MaterialTheme.typography.bodySmall, maxLines = 1)
             }
         }

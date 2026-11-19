@@ -13,7 +13,8 @@ data class CompetitionSnapshot(
     val clubs: List<ClubEntity> = emptyList(),
     val players: List<PlayerEntity> = emptyList(),
     val fixtures: List<FixtureEntity> = emptyList(),
-    val events: List<MatchEventEntity> = emptyList()
+    val events: List<MatchEventEntity> = emptyList(),
+    val sheets: Map<String,MatchSheet> = emptyMap()
 ) {
     fun table(leagueId: String): List<TableRow> = clubs.filter { it.leagueId == leagueId }.map { club ->
         val games = fixtures.filter { it.leagueId == leagueId && it.homeScore != null && it.awayScore != null && (it.homeId == club.id || it.awayId == club.id) }

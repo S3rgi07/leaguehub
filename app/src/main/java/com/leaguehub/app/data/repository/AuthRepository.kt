@@ -45,11 +45,15 @@ class AuthRepository(private val database: LeagueHubDatabase, private val sessio
         } }
     }
     suspend fun login(email: String, password: String) = withContext(Dispatchers.IO) {
+        if (email.trim().lowercase(Locale.ROOT) == DemoAccount.EMAIL && password == DemoAccount.PASSWORD) {
+            DemoAccount.ensureCreated(database)
+        }
         sessionRepository.authenticate {
             val account = database.userAccountDao().findByEmail(email.trim().lowercase(Locale.ROOT))
             require(account != null && PasswordHasher.matches(password, account.passwordSalt, account.passwordHash)) {
                 "Correo o contraseña incorrectos"
             }
+            if(account.userId==DemoAccount.USER_ID) DemoAccount.ensureSheets(database)
             account.toSession()
         }
         sessionRepository.session.value

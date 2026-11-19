@@ -21,6 +21,7 @@ fun ClubsScreen(state:ClubsState,onEvent:(ClubsEvent)->Unit) {
  if(state.clubs.isEmpty() && !state.ui.loading) item { EmptyLocal("No hay equipos en la liga seleccionada.") }
  items(state.clubs,key={it.id}) { row -> HeroCard {
   Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) { ClubCrest(row.name,Modifier.size(64.dp));Column { Text(row.name,style=MaterialTheme.typography.headlineSmall);MutedText("${row.playerCount} jugadores en plantilla");LeagueBadge(if(row.following) "SIGUIENDO" else "EQUIPO DE LA LIGA",color=MaterialTheme.colorScheme.secondary) } }
+  OutlinedButton(onClick={onEvent(ClubsEvent.Details(row.id))}) { Text("Ver equipo") }
   TextButton(onClick={onEvent(ClubsEvent.Follow(row.id))}) { Text(if(row.following) "Siguiendo" else "Seguir equipo") }
   TextButton(onClick={onEvent(ClubsEvent.Players(row.id))}) { Text("Ver plantilla de ${row.name}") }
   if(state.canManage) EditActions({onEvent(ClubsEvent.Edit(row.id))},{onEvent(ClubsEvent.Delete(row.id))})

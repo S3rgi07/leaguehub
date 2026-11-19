@@ -50,7 +50,7 @@ class LocalHubViewModel(
             LocalEvent.ConfirmLogout -> { mutable.update { it.copy(logoutConfirmation=false) };logout() }
             LocalEvent.ChangeAppearance -> if(appearanceStorage!=null) appearanceStorage.update { if(it=="Oscuro") "Claro" else "Oscuro" } else mutable.update { it.copy(appearance=if(it.appearance=="Oscuro") "Claro" else "Oscuro") }
             is LocalEvent.ReopenResult -> reopenResult(event.id)
-            is LocalEvent.Navigate, LocalEvent.Back, LocalEvent.OpenBackups -> Unit // platform navigation belongs to each route's effect collector
+            is LocalEvent.OpenPage, is LocalEvent.Navigate, LocalEvent.Back, LocalEvent.OpenBackups -> Unit // platform navigation belongs to each route's effect collector
         }
     }
     private fun reload() { loadJob?.cancel(); loadJob = viewModelScope.launch {

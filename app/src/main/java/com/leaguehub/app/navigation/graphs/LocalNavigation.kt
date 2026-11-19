@@ -14,6 +14,14 @@ import com.leaguehub.app.feature.local.events.LocalEventsRoute
 import com.leaguehub.app.feature.local.standings.StandingsRoute
 import com.leaguehub.app.feature.local.profile.LocalProfileRoute
 import com.leaguehub.app.feature.local.backup.BackupRoute
+import com.leaguehub.app.feature.local.settings.SettingsRoute
+import com.leaguehub.app.feature.local.alerts.AlertsRoute
+import com.leaguehub.app.feature.local.explore.ExploreRoute
+import com.leaguehub.app.feature.local.dashboard.DashboardRoute
+import com.leaguehub.app.feature.local.leaguedetail.LeagueDetailRoute
+import com.leaguehub.app.feature.local.teamdetail.TeamDetailRoute
+import com.leaguehub.app.feature.local.matchdetail.MatchDetailRoute
+import com.leaguehub.app.feature.local.center.CenterRoute
 fun NavGraphBuilder.localNavigation(nav:NavHostController,deps:LocalDependencies) {
  navigation<LocalHubDestination>(startDestination=LocalHomeDestination) {
   composable<LocalHomeDestination> { entry -> LocalHomeRoute(nav,deps,entry) }
@@ -24,6 +32,14 @@ fun NavGraphBuilder.localNavigation(nav:NavHostController,deps:LocalDependencies
   composable<LocalEventsDestination> { entry -> LocalEventsRoute(nav,deps,entry) }
   composable<LocalStandingsDestination> { entry -> StandingsRoute(nav,deps,entry) }
   composable<LocalProfileDestination> { entry -> LocalProfileRoute(nav,deps,entry) }
+  composable<SettingsDestination> { entry -> SettingsRoute(nav,deps,entry) }
+  composable<NotificationsDestination> { entry -> AlertsRoute(nav,deps,entry) }
+  composable<ExploreDestination> { entry -> ExploreRoute(nav,deps,entry) }
+  composable<OrganizerDashboardDestination> { entry -> DashboardRoute(nav,deps,entry) }
+  composable<LeagueDetailDestination> { entry -> LeagueDetailRoute(nav,deps,entry) }
+  composable<TeamDetailDestination> { entry -> TeamDetailRoute(nav,deps,entry) }
+  composable<MatchDetailDestination> { entry -> MatchDetailRoute(nav,deps,entry) }
+  composable<MatchCenterDestination> { entry -> CenterRoute(nav,deps,entry) }
   composable<LocalBackupDestination> { entry -> BackupRoute(nav,deps,entry) }
  }
 }

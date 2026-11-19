@@ -40,6 +40,72 @@ Las capturas proceden de `InterfaceRecoveryTest` con una cuenta de prueba y dato
 memoria. Esos registros no se agregan a la base de producción ni al instalar el APK. La prueba
 comprueba identidad de sesión, estadísticas, filtros de posiciones y selección de fechas.
 
+## Cuenta de demostración
+
+Instala el APK actualizado e inicia sesión con:
+
+- **Correo:** `demo@leaguehub.app`
+- **Contraseña:** `DemoLiga2026!`
+- **Perfil:** Ana Torres, organizadora y jugadora de Falcons.
+
+El primer acceso con estas credenciales crea una liga local con 6 equipos, 36 jugadores,
+15 partidos terminados, 6 pendientes y sus eventos. El perfil de Ana tiene 5 partidos,
+5 goles, 3 asistencias, 3 amarillas, 450 minutos y cinco valoraciones. También hay equipos
+seguidos, tabla de posiciones y resultados recientes. Las fechas se calculan en el primer
+acceso para que haya próximos partidos en el calendario.
+
+Los datos se guardan en Room y se pueden editar. Volver a iniciar sesión no duplica la liga,
+no revierte cambios ni restaura eliminaciones. Si cambias la contraseña de esta cuenta,
+deberás usar tu nueva contraseña. La cuenta se prepara al iniciar sesión y funciona sin Internet.
+
+## Flujo recuperado de Figma · versión 1.1
+
+Referencia: [LeagueHub — App móvil y flujo completo](https://www.figma.com/design/IAhnhFIXe7V2smEV0zrRt6/LeagueHub-%E2%80%94-App-m%C3%B3vil-y-flujo-completo?node-id=1-2).
+
+Se recupera el recorrido con datos locales, conservando las cuentas, formularios, resultados,
+respaldos y el diseño de Inicio, Perfil, Tabla y Calendario. Cada nueva funcionalidad de
+`feature/local` tiene `Screen`, `ViewModel`, `State`, `Event` y `Route`. Los detalles reciben
+solo IDs mediante destinos `@Serializable`; las pantallas emiten eventos y el ViewModel
+expone un `StateFlow`.
+
+| Vista / recorrido | Comportamiento disponible |
+|---|---|
+| Detalle de liga | Diseño original, equipos, progreso y resultados guardados. Acceso desde Ligas → Detalle de liga o Explorar. |
+| Detalle de equipo | Diseño original con escudo, posición, próximo partido, seguimiento, plantilla desplegable y ficha estadística de cada jugador. |
+| Detalle del partido | Diseño original con marcador, horario, cancha, compartir y ruta en una aplicación de mapas. La imagen del mapa es ilustrativa; no inventa distancias ni tiempos de viaje. |
+| Match Center · Resumen | Cronología real de goles, asistencias, tarjetas y cambios; acceso al registro de eventos. |
+| Match Center · Alineación | Cancha, titulares/suplentes, formaciones de 5/7/11, sustituciones y reingresos. El selector de minuto permite revisar quién estaba en cancha. |
+| Minutos jugados | Calcula los intervalos de titulares y cambios de ambos equipos; permite guardar las participaciones y conservar las valoraciones de quienes jugaron. |
+| Match Center · Estadísticas | Barras comparativas de goles registrados, asistencias, amarillas, rojas y participaciones. |
+| Match Center · Galería | El organizador agrega imágenes con el selector de Android. Las referencias se guardan con permisos de lectura persistentes. Quitar una foto de la galería no borra el archivo original. |
+| Control del partido | Inicio/reanudación, descanso y minuto manual. Marcador en vivo derivado de goles capturados. Publicar el resultado actualiza tabla y perfil; volver a programado restablece el estado de reloj. |
+| Panel organizador | Progreso de resultados, equipos/jugadores y actas pendientes, con acceso al control de cada partido. |
+| Notificaciones | Actividad local de la liga y equipos seguidos, filtros y estado leído persistente por cuenta. |
+| Configuración | Cuenta, contraseña, apariencia, privacidad, modo jugador/organizador, cambio de liga y respaldos. |
+| Explorar | Búsqueda de las ligas disponibles en el teléfono y acceso a sus detalles. |
+
+Las alineaciones, cambios, reloj y referencias de galería se almacenan como documentos JSON
+en la tabla `user_data` de Room/SQLite, asociados al dueño de la liga y al partido. No requieren
+borrar la base ni cambiar su esquema. Los repositorios verifican propiedad, pertenencia de
+jugadores y coherencia temporal; las alineaciones protegen a los jugadores frente a borrados o
+traslados que romperían su historial. Los respaldos incluyen alineaciones/cambios/reloj y
+reasignan sus IDs al importar. Las fotos y sus permisos quedan en el dispositivo y no se exportan.
+
+La cuenta demo conserva las mismas credenciales. Al entrar incorpora, una sola vez,
+alineaciones para sus partidos existentes sin reemplazar las que se hayan editado. Para probar:
+**Inicio → Abrir Match Center → Alineación**. Configuración está en el engranaje de Perfil;
+las notificaciones, en la campana de Inicio.
+
+El flujo local no incorpora reconocimiento OCR, predicciones de IA, medición de posesión/tiros,
+notificaciones push ni sincronización entre teléfonos. La captura de eventos y resultados es
+manual. No hay botones que simulen esos servicios. La consulta remota de demostración de
+Inicio se conserva como llamada real a Internet.
+
+Las capturas de los recorridos recuperados están en [docs/capturas/recuperadas](docs/capturas/recuperadas).
+Se generaron con `RestoredViewsFlowTest` usando Room en memoria y el grafo de navegación real.
+La verificación de esta versión pasó 25 pruebas unitarias y 30 instrumentadas en Pixel 8/API 37,
+compilación y lint sin errores. Los avisos de lint restantes no bloquean la compilación.
+
 ## Servicios
 
 | Servicio | Función y condiciones |
@@ -198,7 +264,7 @@ cada modelo de teléfono: las pruebas instrumentadas se ejecutan en el emulador 
 
 ## Verificación de la entrega local
 
-La entrega alineada a la rúbrica pasó compilación y lint sin errores, 21 pruebas unitarias y 27 pruebas
+La entrega alineada a la rúbrica pasó compilación y lint sin errores, 25 pruebas unitarias y 30 pruebas
 instrumentadas en el emulador disponible, incluyendo registro/login, cambio de contraseña,
 recreación de actividad, captura por formularios, edición/eliminación, protección de dependencias,
 modo de lectura, reapertura de datos y migraciones. El APK de `APK/LeagueHub-debug.apk` se
@@ -213,7 +279,7 @@ la aplicación normal usa el endpoint público real indicado en Servicios.
 
 La validación final del grafo tipado comprueba detalles por ID, regreso entre pantallas y acceso a Respaldos. El escenario de Internet simula primero un fallo y después una respuesta correcta al reintentar, mientras verifica que los datos locales siguen accesibles. También se comprobó que el endpoint público GET /posts/1 responde desde el entorno de desarrollo.
 
-La recuperación visual también pasó 21 pruebas unitarias y 27 instrumentadas en Pixel 8/API 37,
+La recuperación visual también pasó 25 pruebas unitarias y 30 instrumentadas en Pixel 8/API 37,
 con lint sin errores. Incluye la comprobación del perfil de la cuenta activa, su historial de Room,
 los filtros General/Local/Visitante y el calendario por fecha. Las capturas anteriores corresponden
 al mismo código del APK actualizado de esta entrega.

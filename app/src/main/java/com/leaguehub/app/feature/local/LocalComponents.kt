@@ -32,10 +32,10 @@ fun LocalFrame(ui:LocalUiState,section:LocalSection,onEvent:(LocalEvent)->Unit,s
         LazyColumn(Modifier.fillMaxSize().padding(padding).testTag("local-list"),state=list,contentPadding=PaddingValues(start=20.dp,end=20.dp,top=8.dp,bottom=20.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
             if(showBack) item { TextButton(onClick={onEvent(LocalEvent.Back)}) { Text("Volver") } }
             if(header) item {
-                if(section==LocalSection.HOME) Row(Modifier.fillMaxWidth().padding(vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+                if(section==LocalSection.HOME && title==null) Row(Modifier.fillMaxWidth().padding(vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                     PlayerAvatar(ui.name,size=44.dp)
                     Column(Modifier.weight(1f)) { Text("Hola, ${ui.name.substringBefore(" ")}",style=MaterialTheme.typography.titleLarge);MutedText("Tu liga, al día · ${ui.roleLabel}") }
-                    LeagueIconButton(R.drawable.lh_user,"Mi perfil",{onEvent(LocalEvent.Navigate(LocalSection.PROFILE))})
+                    LeagueIconButton(R.drawable.lh_bell,"Notificaciones",{onEvent(LocalEvent.OpenPage(LocalPage.ALERTS))})
                 } else PlayerTopBar(title ?: when(section) { LocalSection.TABLE->"Tabla de posiciones";LocalSection.MATCHES->"Calendario";else->section.title },if(section==LocalSection.PROFILE) ui.email else "LEAGUEHUB · TU COMUNIDAD DEPORTIVA")
             }
             if(ui.loading) item { CircularProgressIndicator();Text("Cargando tus datos…") }
@@ -70,12 +70,12 @@ fun LocalFrame(ui:LocalUiState,section:LocalSection,onEvent:(LocalEvent)->Unit,s
 }
 @Composable internal fun EditActions(edit:()->Unit,delete:()->Unit) { Row { TextButton(onClick=edit) { Text("Editar") };TextButton(onClick=delete) { Text("Eliminar") } } }
 @Composable internal fun PlayerNumbers(row:PlayerRow) { Text(row.stats);Text(row.discipline);row.rating?.let { Text(it) } }
-enum class MatchAction { EDIT, RESULT, EVENTS, REOPEN, DELETE, MAP, SHARE }
+enum class MatchAction { CENTER, DETAIL, EDIT, RESULT, EVENTS, REOPEN, DELETE, MAP, SHARE }
 @Composable internal fun MatchCard(row:MatchRow,canManage:Boolean,busy:Boolean,onAction:(MatchAction)->Unit) {
     var expanded by remember { mutableStateOf(false) }
     HeroCard {
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
-            LeagueBadge(if(row.scheduled) "PRÓXIMO PARTIDO" else "FINAL",color=if(row.scheduled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary)
+            LeagueBadge(row.statusLabel.ifBlank { if(row.scheduled) "PRÓXIMO PARTIDO" else "FINAL" },color=if(row.scheduled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary)
             Box {
                 TextButton(onClick={expanded=true}) { Text("Opciones") }
                 DropdownMenu(expanded=expanded,onDismissRequest={expanded=false}) {
@@ -96,7 +96,8 @@ enum class MatchAction { EDIT, RESULT, EVENTS, REOPEN, DELETE, MAP, SHARE }
         }
         MutedText(row.date)
         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(6.dp)) { LeagueIcon(R.drawable.lh_location,null,tint=MaterialTheme.colorScheme.secondary);MutedText(row.venue) }
-        OutlinedButton(onClick={onAction(MatchAction.EVENTS)},modifier=Modifier.fillMaxWidth(),shape=MaterialTheme.shapes.medium,colors=ButtonDefaults.outlinedButtonColors(contentColor=MaterialTheme.colorScheme.secondary)) { Text("Ver eventos") }
+        OutlinedButton(onClick={onAction(MatchAction.CENTER)},modifier=Modifier.fillMaxWidth(),shape=MaterialTheme.shapes.medium,colors=ButtonDefaults.outlinedButtonColors(contentColor=MaterialTheme.colorScheme.secondary)) { Text("Abrir Match Center") }
+        Row { TextButton(onClick={onAction(MatchAction.DETAIL)}) { Text("Ver partido y ubicación") };TextButton(onClick={onAction(MatchAction.EVENTS)}) { Text("Ver eventos") } }
         if(canManage) TextButton(onClick={onAction(MatchAction.RESULT)},modifier=Modifier.fillMaxWidth()) { Text(if(row.scheduled) "Registrar resultado" else "Corregir resultado") }
     }
 }
