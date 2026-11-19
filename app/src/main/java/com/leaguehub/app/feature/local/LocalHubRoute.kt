@@ -1,6 +1,8 @@
 package com.leaguehub.app.feature.local
 
 import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -33,6 +35,12 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun LocalHubRoute(onLogout: () -> Unit) {
     val app=LocalContext.current.applicationContext as LeagueHubApplication
+    val backupVm: BackupViewModel=viewModel(factory=viewModelFactory { initializer {
+        BackupViewModel(com.leaguehub.app.data.repository.BackupRepository(app.database),app.userSessionRepository,app.contentResolver)
+    } })
+    val backup by backupVm.state.collectAsStateWithLifecycle()
+    val exporter=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json"),backupVm::export)
+    val importer=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument(),backupVm::inspect)
     val vm: LocalHubViewModel=viewModel(factory=viewModelFactory { initializer {
         LocalHubViewModel(app.competitionRepository,app.userSessionRepository,app.authRepository,app.database.userAccountDao(),app.followedTeamsRepository)
     } })
@@ -45,11 +53,13 @@ fun LocalHubRoute(onLogout: () -> Unit) {
         return
     }
     val appearance by app.appearanceState.state.collectAsStateWithLifecycle()
-    LocalHubScreen(state,vm,appearance,{ app.appearanceState.update { if(it=="Oscuro") "Claro" else "Oscuro" } })
+    LocalHubScreen(state,vm,appearance,{ app.appearanceState.update { if(it=="Oscuro") "Claro" else "Oscuro" } },backup.busy,
+        { exporter.launch("LeagueHub-${java.time.LocalDate.now()}.json") },{ importer.launch(arrayOf("application/json","text/plain","application/octet-stream")) })
+    BackupDialogs(backup,backupVm::confirm,backupVm::dismiss)
 }
 
 @Composable
-fun LocalHubScreen(s: LocalState, vm: LocalHubViewModel, appearance: String = "Oscuro", onAppearance: () -> Unit = {}) {
+fun LocalHubScreen(s: LocalState, vm: LocalHubViewModel, appearance: String = "Oscuro", onAppearance: () -> Unit = {}, backupBusy: Boolean=false, onExport: () -> Unit={}, onImport: () -> Unit={}) {
     val listState=rememberLazyListState()
     LaunchedEffect(s.section,s.leagueId,s.fixtureId) { listState.scrollToItem(0) }
     var logoutConfirmation by rememberSaveable { mutableStateOf(false) }
@@ -174,6 +184,13 @@ fun LocalHubScreen(s: LocalState, vm: LocalHubViewModel, appearance: String = "O
                         TextButton(onClick={vm.mode()}) { Text(if(s.session.role==SessionRole.ORGANIZER) "Cambiar a jugador" else "Cambiar a organizador") }
                         OutlinedButton(onClick={logoutConfirmation=true},enabled=!s.busy) { Text("Cerrar sesión") }
                     }
+                    if(s.session.role==SessionRole.ORGANIZER) item {
+                        Text("Respaldos",style=MaterialTheme.typography.titleLarge)
+                        Text("Incluyen tus ligas y sus datos deportivos. No incluyen cuentas ni contraseñas.")
+                        OutlinedButton(onClick=onExport,enabled=!backupBusy && !s.busy) { Text("Exportar respaldo") }
+                        OutlinedButton(onClick=onImport,enabled=!backupBusy && !s.busy) { Text("Importar respaldo") }
+                        if(backupBusy) { CircularProgressIndicator();Text("Procesando respaldo…") }
+                    }
                 }
             }
             item { Spacer(Modifier.height(16.dp)) }
@@ -185,6 +202,22 @@ fun LocalHubScreen(s: LocalState, vm: LocalHubViewModel, appearance: String = "O
         s.error?.let { Text(it,color=MaterialTheme.colorScheme.error) }
     }},confirmButton={TextButton(onClick=vm::confirmDelete,enabled=!s.busy) { Text("Eliminar") }},dismissButton={TextButton(onClick=vm::dismiss,enabled=!s.busy) { Text("Cancelar") }}) }
     if(logoutConfirmation) AlertDialog(onDismissRequest={logoutConfirmation=false},title={Text("Cerrar sesión")},text={Text("Tus datos permanecerán guardados en este teléfono.")},confirmButton={TextButton(onClick={logoutConfirmation=false;vm.logout()}) { Text("Salir") }},dismissButton={TextButton(onClick={logoutConfirmation=false}) { Text("Cancelar") }})
+}
+
+@Composable
+fun BackupDialogs(state: BackupState,onConfirm: () -> Unit,onDismiss: () -> Unit) {
+    val preview=state.preview
+    if(state.busy && preview==null) AlertDialog(onDismissRequest={},title={Text("Procesando respaldo")},text={CircularProgressIndicator()},confirmButton={})
+    else if(preview!=null) AlertDialog(onDismissRequest=onDismiss,title={Text("Importar respaldo")},text={
+        Column(Modifier.heightIn(max=360.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+            Text("${preview.leagues.size} ligas · ${preview.clubs.size} equipos · ${preview.players.size} jugadores")
+            Text("${preview.fixtures.size} partidos · ${preview.events.size} eventos")
+            preview.leagues.take(20).forEach { Text("${it.name} · ${it.season}") }
+            Text("Se crearán copias nuevas a tu nombre, sin reemplazar registros. Los jugadores quedarán sin cuenta vinculada.")
+            state.error?.let { Text(it,color=MaterialTheme.colorScheme.error) }
+        }
+    },confirmButton={TextButton(onClick=onConfirm,enabled=!state.busy && preview.leagues.isNotEmpty()) { Text(if(state.busy) "Importando…" else "Importar copias") }},dismissButton={TextButton(onClick=onDismiss,enabled=!state.busy) { Text("Cancelar") }})
+    else if(state.error!=null || state.message!=null) AlertDialog(onDismissRequest=onDismiss,title={Text(if(state.error!=null) "No se pudo completar" else "Respaldo")},text={Text(state.error ?: state.message.orEmpty())},confirmButton={TextButton(onClick=onDismiss) { Text("Aceptar") }})
 }
 
 @Composable private fun SectionTitle(title: String, canAdd: Boolean, action: String, onAdd: () -> Unit) {

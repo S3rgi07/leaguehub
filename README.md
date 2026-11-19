@@ -48,6 +48,30 @@ La eliminación solicita confirmación. Para borrar ligas o equipos se deben qui
 sus dependencias. Un jugador con eventos no se puede eliminar ni trasladar a otro equipo.
 Eliminar un partido elimina también sus eventos y actualiza las estadísticas.
 
+## Respaldos locales
+
+En Perfil, en modo Organizador, están **Exportar respaldo** e **Importar respaldo**.
+El selector de archivos de Android permite elegir el destino o el archivo sin permisos generales
+de almacenamiento.
+
+- Exportar guarda en JSON todas las ligas creadas por la cuenta activa y sus equipos, jugadores,
+  partidos y eventos. La lectura se hace en una transacción para obtener una copia consistente.
+- Importar valida formato, versión, campos obligatorios, identificadores, relaciones, fechas,
+  dorsales, marcadores, eventos y valoraciones. El límite es 8 MB y 50 000 registros.
+- Antes de guardar aparece una vista previa con las cantidades y las ligas incluidas. Cancelar
+  no cambia la base. Un respaldo vacío se puede consultar, pero no tiene copias que importar.
+- Confirmar crea ligas con el sufijo `(copia)`, nuevos identificadores y el propietario actual.
+  No sobrescribe ni fusiona registros existentes. Importar nuevamente crea otras copias.
+- No se exportan cuentas, correos de acceso, contraseñas, sesiones, preferencias ni vínculos de
+  jugadores con cuentas. Los jugadores importados se pueden vincular después desde Jugadores.
+- Tabla y estadísticas se recalculan desde los resultados y eventos restaurados. Todo el guardado
+  usa una única transacción: si falla cualquier registro, no se conserva ninguna parte de esa importación.
+
+El formato es `leaguehub-backup`, versión `1`, con fecha ISO y arreglos `leagues`, `clubs`,
+`players`, `fixtures` y `events`. El archivo es UTF-8 y contiene nombres y datos deportivos
+legibles, sin cifrado. Para trasladar una liga a otro teléfono, crear primero una cuenta allí,
+elegir modo Organizador e importar el archivo.
+
 ## Persistencia y arquitectura
 
 Room v4 almacena la base privada `leaguehub.db` en la ruta de
