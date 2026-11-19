@@ -40,6 +40,24 @@ Las capturas proceden de `InterfaceRecoveryTest` con una cuenta de prueba y dato
 memoria. Esos registros no se agregan a la base de producción ni al instalar el APK. La prueba
 comprueba identidad de sesión, estadísticas, filtros de posiciones y selección de fechas.
 
+## Cuenta de demostración
+
+Instala el APK actualizado e inicia sesión con:
+
+- **Correo:** `demo@leaguehub.app`
+- **Contraseña:** `DemoLiga2026!`
+- **Perfil:** Ana Torres, organizadora y jugadora de Falcons.
+
+El primer acceso con estas credenciales crea una liga local con 6 equipos, 36 jugadores,
+15 partidos terminados, 6 pendientes y sus eventos. El perfil de Ana tiene 5 partidos,
+5 goles, 3 asistencias, 3 amarillas, 450 minutos y cinco valoraciones. También hay equipos
+seguidos, tabla de posiciones y resultados recientes. Las fechas se calculan en el primer
+acceso para que haya próximos partidos en el calendario.
+
+Los datos se guardan en Room y se pueden editar. Volver a iniciar sesión no duplica la liga,
+no revierte cambios ni restaura eliminaciones. Si cambias la contraseña de esta cuenta,
+deberás usar tu nueva contraseña. La cuenta se prepara al iniciar sesión y funciona sin Internet.
+
 ## Servicios
 
 | Servicio | Función y condiciones |
